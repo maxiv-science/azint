@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#define PY_ARRAY_UNIQUE_SYMBOL fai_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL azint_ARRAY_API
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <structmember.h>
@@ -22,6 +22,7 @@ struct Poni
     float rot1;
     float rot2;
     float rot3;
+    float wavelength;
 };
 
 int bisect_right(int nbins, float* bins, float x)
@@ -77,7 +78,6 @@ void tocsr(Vector<Entry>* rows, int nrows,
         }
     }
     row_ptr[nrows] = nentry;
-    printf("entry %d\n", nentry);
 }
 
 // b = A*x
@@ -140,7 +140,7 @@ int get_shape(PyObject* py_shape, long shape[2])
     return 0;
 }
 
-void generate_matrix_1d(long shape[0], int n_splitting, float pixel_size, Vector<Entry>* rows,
+void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, Vector<Entry>* rows,
                       Poni& poni, int8_t* mask, int nradial_bins, float* radial_bins)
 {
     float rot[3][3];
@@ -161,9 +161,12 @@ void generate_matrix_1d(long shape[0], int n_splitting, float pixel_size, Vector
                     };
                     float pos[3];
                     dot(pos, rot, p);
-                    double r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
                     
-                    int radial_index = bisect_right(nradial_bins, radial_bins, r) - 1;
+                    float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
+                    float tth = atan2f(r, pos[2]);
+                    // q = 4pi/lambda sin( 2theta / 2 ) in nm-1
+                    float q = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
+                    int radial_index = bisect_right(nradial_bins, radial_bins, q) - 1;
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
@@ -177,7 +180,7 @@ void generate_matrix_1d(long shape[0], int n_splitting, float pixel_size, Vector
     }
 }
 
-void generate_matrix_2d(long shape[0], int n_splitting, float pixel_size, Vector<Entry>* rows,
+void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, Vector<Entry>* rows,
                       Poni& poni, int8_t* mask, 
                       int nradial_bins, float* radial_bins,
                       int nphi_bins, float* phi_bins)
@@ -200,9 +203,12 @@ void generate_matrix_2d(long shape[0], int n_splitting, float pixel_size, Vector
                     };
                     float pos[3];
                     dot(pos, rot, p);
-                    double r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
                     
-                    int radial_index = bisect_right(nradial_bins, radial_bins, r) - 1;
+                    float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
+                    float tth = atan2f(r, pos[2]);
+                    // q = 4pi/lambda sin( 2theta / 2 ) in nm-1
+                    float q = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
+                    int radial_index = bisect_right(nradial_bins, radial_bins, q) - 1;
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
@@ -262,11 +268,7 @@ generate_matrix(PyObject* self, PyObject* args)
     poni.rot1 = get_double(py_poni, "rot1");
     poni.rot2 = get_double(py_poni, "rot2");
     poni.rot3 = get_double(py_poni, "rot3");
-    
-    printf("shape [%ld, %ld]\n", shape[0], shape[1]);
-    printf("poni %f %f\n", poni.poni1, poni.poni2);
-    printf("n_splitting %d\n", n_splitting);
-    
+    poni.wavelength = get_double(py_poni, "wavelength");
     
     int nrows;
     Vector<Entry>* rows;
@@ -322,8 +324,6 @@ generate_matrix(PyObject* self, PyObject* args)
     values.leak();
     tocsr(rows, nrows, col_idx, row_ptr, values);
     delete [] rows;
-    
-    printf("after delete\n");
     
     PyObject* tuple = PyTuple_New(3);
     
