@@ -25,10 +25,10 @@ struct Poni
     float wavelength;
 };
 
-int bisect_right(int nbins, float* bins, float x)
+int bisect_right(int n, float* bins, float x)
 {
     int lo = 0;
-    int hi = nbins;
+    int hi = n;
     while (lo < hi) {
         int mid = (lo + hi) / 2;
         if (x < bins[mid]) {
@@ -166,7 +166,7 @@ void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, Vector
                     float tth = atan2f(r, pos[2]);
                     // q = 4pi/lambda sin( 2theta / 2 ) in nm-1
                     float q = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
-                    int radial_index = bisect_right(nradial_bins, radial_bins, q) - 1;
+                    int radial_index = bisect_right(nradial_bins+1, radial_bins, q) - 1;
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
@@ -208,13 +208,13 @@ void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, Vector
                     float tth = atan2f(r, pos[2]);
                     // q = 4pi/lambda sin( 2theta / 2 ) in nm-1
                     float q = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
-                    int radial_index = bisect_right(nradial_bins, radial_bins, q) - 1;
+                    int radial_index = bisect_right(nradial_bins+1, radial_bins, q) - 1;
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
                     
                     float phi = atan2f(pos[0], pos[1]);
-                    int phi_index = bisect_right(nphi_bins, phi_bins, phi) - 1;
+                    int phi_index = bisect_right(nphi_bins+1, phi_bins, phi) - 1;
                     if ((phi_index < 0) || (phi_index >= nphi_bins)) {
                         continue;
                     }
