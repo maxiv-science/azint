@@ -59,7 +59,8 @@ class AzimuthalIntegrator():
                 pass
             
     def integrate(self, img):
-        result = spmv(*self.sparse_matrix, img) / self.norm
+        signal = spmv(*self.sparse_matrix, img)
+        result = np.divide(signal, self.norm, out=np.zeros_like(signal), where=self.norm!=0.0)
         return result.reshape(self.output_shape)
 
     def _make_shm(self, name, a):

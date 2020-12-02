@@ -1,0 +1,25 @@
+{% set version = "0.1.1" %}
+
+package:
+  name: azint
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  number: 1
+  script: python setup.py install --single-version-externally-managed --record record.txt
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+
+  host:
+    - python
+    - numpy
+    
+  run:
+    - python
+    - numpy
+
+ 
