@@ -82,6 +82,12 @@ class AzimuthalIntegrator():
             # assume beam center is inside the detector
             bins[0] = np.linspace(0.0, maxq, qbins+1)
             
+        self.q = 0.5*(bins[0][1:] + bins[0][:-1])
+        if len(bins) == 2:
+            self.phi = 0.5*(bins[1][1:] + bins[1][:-1])
+        else:
+            self.phi = None
+            
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         if self.create:
             self.sparse_matrix = generate_matrix(poni, shape, pixel_size, n_splitting, mask, bins)
