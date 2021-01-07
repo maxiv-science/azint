@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from multiprocessing import shared_memory
 from _azint import generate_matrix, spmv
@@ -22,14 +23,67 @@ class Poni():
         self.rot2 = float(config['rot2'])
         self.rot3 = float(config['rot3'])
         self.wavelength = float(config['wavelength'])
+        
+def rotation_matrix(poni: Poni):
+    cos_rot1 = np.cos(poni.rot1)
+    cos_rot2 = np.cos(poni.rot2)
+    cos_rot3 = np.cos(poni.rot3)
+    sin_rot1 = np.sin(poni.rot1)
+    sin_rot2 = np.sin(poni.rot2)
+    sin_rot3 = np.sin(poni.rot3)
 
+    # Rotation about axis 1: Note this rotation is left-handed
+    rot1 = np.array([[1.0, 0.0, 0.0],
+                     [0.0, cos_rot1, sin_rot1],
+                     [0.0, -sin_rot1, cos_rot1]])
+    
+    # Rotation about axis 2. Note this rotation is left-handed
+    rot2 = np.array([[cos_rot2, 0.0, -sin_rot2],
+                     [0.0, 1.0, 0.0],
+                     [sin_rot2, 0.0, cos_rot2]])
+    
+    # Rotation about axis 3: Note this rotation is right-handed
+    rot3 = np.array([[cos_rot3, -sin_rot3, 0.0],
+                     [sin_rot3, cos_rot3, 0.0],
+                     [0.0, 0.0, 1.0]])
+    
+    rotation_matrix = np.dot(np.dot(rot3, rot2), rot1)
+    return rotation_matrix
+
+# calculate max q value from the 4 corners of the detector
+def calculate_maxq(shape, poni: Poni, pixel_size: float):
+    rot = rotation_matrix(poni)
+    maxq = 0.0
+    n, m = shape[0] - 1, shape[1] -1
+    i1 = [0, 0, n, n]
+    i2 = [0, m, 0, m]
+    for i in range(4):
+        p = [(i1[i] + 0.5) * pixel_size - poni.poni1,
+             (i2[i] + 0.5) * pixel_size - poni.poni2,
+             poni.dist
+        ]
+        pos = np.dot(rot, p)
+        r = np.sqrt(pos[0]**2 + pos[1]**2)
+        tth = np.arctan2(r, pos[2])
+        # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
+        q = 4.0e-9 * np.pi / poni.wavelength * np.sin(0.5*tth)
+        if q > maxq:
+            maxq = q
+    return maxq
 
 class AzimuthalIntegrator():
     def __init__(self, poni_file, shape, pixel_size, n_splitting, mask, bins, solid_angle=True, create=True):
         self._shms = []
         self.create = create
-        self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         poni = Poni(poni_file)
+        qbins = bins[0]
+        if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
+            maxq = calculate_maxq(shape, poni, pixel_size)
+            # assume beam center is inside the detector
+            bins[0] = np.linspace(0.0, maxq, qbins)
+            print(maxq)
+            
+        self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         if self.create:
             self.sparse_matrix = generate_matrix(poni, shape, pixel_size, n_splitting, mask, bins)
             self._make_shm('azint_col_idx', self.sparse_matrix[0])
@@ -64,6 +118,9 @@ class AzimuthalIntegrator():
         return result.reshape(self.output_shape)
 
     def _make_shm(self, name, a):
+        path = os.path.join('/dev/shm', name)
+        if os.path.exists(path):
+            os.remove(path)
         shm = shared_memory.SharedMemory(name, create=True, size=a.nbytes)
         self._shms.append(shm)
         shm_a = np.ndarray(shape=a.shape, dtype=a.dtype, buffer=shm.buf)
