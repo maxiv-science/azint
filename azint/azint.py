@@ -80,8 +80,7 @@ class AzimuthalIntegrator():
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
             maxq = calculate_maxq(shape, poni, pixel_size)
             # assume beam center is inside the detector
-            bins[0] = np.linspace(0.0, maxq, qbins)
-            print(maxq)
+            bins[0] = np.linspace(0.0, maxq, qbins+1)
             
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         if self.create:
