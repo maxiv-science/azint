@@ -319,6 +319,7 @@ generate_matrix(PyObject* self, PyObject* args)
     
     Vector<int> col_idx, row_ptr;
     Vector<float> values;
+    // numpy will later take ownership of the memory
     col_idx.leak();
     row_ptr.leak();
     values.leak();

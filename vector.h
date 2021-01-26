@@ -20,9 +20,10 @@ public:
     }
     void push_back(const T& value);
     size_t size() const {return m_size;}
+    size_t capacity() const {return m_capacity;}
     T* data() const {return m_data;}
     void leak() {m_leak = true;}
-    void clear() {free(m_data); m_size = 0; m_capacity = 0;}
+    void clear();
 private:
     size_t m_size;
     size_t m_capacity;
@@ -87,3 +88,13 @@ void Vector<T>::push_back(const T& value)
     m_data[m_size] = value;
     m_size++;
 }
+
+template<typename T>
+void Vector<T>::clear()
+{
+    free(m_data); 
+    m_data = nullptr;
+    m_size = 0; 
+    m_capacity = 0;
+}
+
