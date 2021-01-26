@@ -12,17 +12,13 @@ public:
     Vector(size_t size);
     ~Vector();
     void resize(size_t size);
-    inline T& operator [] (size_t index) {return m_data[index];}
-    inline const T& operator [] (size_t index) const 
-    { 
-        assert(index >= m_size);
-        return m_data[index];
-    }
+    inline T& operator [] (size_t index) { return m_data[index]; }
+    inline const T& operator [] (size_t index) const { return m_data[index]; }
     void push_back(const T& value);
     size_t size() const {return m_size;}
-    size_t capacity() const {return m_capacity;}
-    T* data() const {return m_data;}
-    void leak() {m_leak = true;}
+    size_t capacity() const { return m_capacity; }
+    T* data() const { return m_data; }
+    void leak() { m_leak = true; }
     void clear();
 private:
     size_t m_size;
