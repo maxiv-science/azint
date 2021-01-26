@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from multiprocessing import shared_memory
 from _azint import generate_matrix, spmv
 
 
@@ -72,9 +71,7 @@ def calculate_maxq(shape, poni: Poni, pixel_size: float):
     return maxq
 
 class AzimuthalIntegrator():
-    def __init__(self, poni_file, shape, pixel_size, n_splitting, mask, bins, solid_angle=True, create=True):
-        self._shms = []
-        self.create = create
+    def __init__(self, poni_file, shape, pixel_size, n_splitting, mask, bins, solid_angle=True):
         poni = Poni(poni_file)
         qbins = bins[0]
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
@@ -89,17 +86,7 @@ class AzimuthalIntegrator():
             self.phi = None
             
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
-        if self.create:
-            self.sparse_matrix = generate_matrix(poni, shape, pixel_size, n_splitting, mask, bins)
-            self._make_shm('azint_col_idx', self.sparse_matrix[0])
-            self._make_shm('azint_row_ptr', self.sparse_matrix[1])
-            self._make_shm('azint_values', self.sparse_matrix[2])
-        
-        else:
-            col_idx = self._load_shm('azint_col_idx', np.int32)
-            row_ptr = self._load_shm('azint_row_ptr', np.int32)
-            values = self._load_shm('azint_values', np.float32)
-            self.sparse_matrix = (col_idx, row_ptr, values)
+        self.sparse_matrix = generate_matrix(poni, shape, pixel_size, n_splitting, mask, bins)
             
         if solid_angle:
             d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - poni.poni1
@@ -110,30 +97,7 @@ class AzimuthalIntegrator():
         else:
             self.norm = spmv(*self.sparse_matrix, np.ones(shape[0]*shape[1], dtype=np.float32))
             
-    def close(self):
-        for shm in self._shms:
-            shm.close()
-            if self.create:
-                shm.unlink()
-                pass
-            
     def integrate(self, img):
         signal = spmv(*self.sparse_matrix, img)
         result = np.divide(signal, self.norm, out=np.zeros_like(signal), where=self.norm!=0.0)
         return result.reshape(self.output_shape)
-
-    def _make_shm(self, name, a):
-        path = os.path.join('/dev/shm', name)
-        if os.path.exists(path):
-            os.remove(path)
-        shm = shared_memory.SharedMemory(name, create=True, size=a.nbytes)
-        self._shms.append(shm)
-        shm_a = np.ndarray(shape=a.shape, dtype=a.dtype, buffer=shm.buf)
-        shm_a[:] = a[:]
-    
-    def _load_shm(self, name, dtype):
-        shm = shared_memory.SharedMemory(name=name)
-        self._shms.append(shm)
-        size = shm.size // 4
-        a = np.frombuffer(shm.buf, dtype=dtype)
-        return a
