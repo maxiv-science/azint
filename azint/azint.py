@@ -70,20 +70,55 @@ def calculate_maxq(shape, poni: Poni, pixel_size: float):
             maxq = q
     return maxq
 
+def calculate_minq(shape, poni: Poni, pixel_size: float):
+    height = shape[0]*pixel_size
+    width = shape[1]*pixel_size
+
+    # center of detector
+    c1, c2 = 0.5*height, 0.5*width
+
+    p1, p2 = poni.poni1, poni.poni2
+    
+    # distance from center of detector to point p
+    d1 = max(abs(p1 - c1) - height / 2, 0)
+    d2 = max(abs(p2 - c2) - width / 2, 0)
+    
+    if p1 > c1:
+        min1 = -d1
+    else:
+        min1 = d1
+
+    if p2 > c2:
+        min2 = -d2
+    else:
+        min2 = d2
+    
+    rot = rotation_matrix(poni)
+    pos = np.dot(rot, [min1, min2, poni.dist])
+    r = np.sqrt(pos[0]**2 + pos[1]**2)
+    tth = np.arctan2(r, pos[2])
+    # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
+    q = 4.0e-9 * np.pi / poni.wavelength * np.sin(0.5*tth)
+    return q
+
 class AzimuthalIntegrator():
-    def __init__(self, poni_file, shape, pixel_size, n_splitting, mask, bins, solid_angle=True):
+    def __init__(self, poni_file, shape, pixel_size, n_splitting, 
+                 bins, mask=None, solid_angle=True):
         poni = Poni(poni_file)
         qbins = bins[0]
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
+            minq = calculate_minq(shape, poni, pixel_size)
             maxq = calculate_maxq(shape, poni, pixel_size)
-            # assume beam center is inside the detector
-            bins[0] = np.linspace(0.0, maxq, qbins+1)
+            bins[0] = np.linspace(minq, maxq, qbins+1)
             
         self.q = 0.5*(bins[0][1:] + bins[0][:-1])
         if len(bins) == 2:
             self.phi = 0.5*(bins[1][1:] + bins[1][:-1])
         else:
             self.phi = None
+            
+        if mask is None:
+            mask = np.zeros(shape, dtype=np.uint8)
             
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         self.sparse_matrix = generate_matrix(poni, shape, pixel_size, n_splitting, mask, bins)
@@ -94,10 +129,18 @@ class AzimuthalIntegrator():
             p1, p2 = np.meshgrid(d2, d1)
             solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
             self.norm = spmv(*self.sparse_matrix, solid_angle**3)
+            self.solid_angle3 = solid_angle**3
         else:
             self.norm = spmv(*self.sparse_matrix, np.ones(shape[0]*shape[1], dtype=np.float32))
             
     def integrate(self, img):
         signal = spmv(*self.sparse_matrix, img)
         result = np.divide(signal, self.norm, out=np.zeros_like(signal), where=self.norm!=0.0)
+        return result.reshape(self.output_shape)
+    
+    def integrate_with_mask(self, img, mask):
+        inverted_mask = 1 - mask
+        signal = spmv(*self.sparse_matrix, inverted_mask*img)
+        norm = spmv(*self.sparse_matrix, inverted_mask*self.solid_angle3)
+        result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
         return result.reshape(self.output_shape)
