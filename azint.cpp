@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <Python.h>
 #include <stdio.h>
 #include <math.h>
