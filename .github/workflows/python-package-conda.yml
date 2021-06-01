@@ -11,21 +11,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+    - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: 3.8
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+        miniforge-version: latest
     - name: Install conda-build
-      run: |
-        conda install conda-build
+      shell: bash -l {0}
+      run: conda install conda-build
     - name: Build package
+      shell: bash -l {0}
       run: |
         conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
     - name: Prepare artifacts
+      shell: bash -l {0}
       run: |
         mkdir $GITHUB_WORKSPACE/artifacts
         cp $GITHUB_WORKSPACE/linux-64/*.bz2 $GITHUB_WORKSPACE/artifacts/
