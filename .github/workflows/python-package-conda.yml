@@ -25,7 +25,7 @@ jobs:
       shell: bash -l {0}
       run: |
         mkdir $GITHUB_WORKSPACE/artifacts
-        cp $GITHUB_WORKSPACE/linux-64/*.bz2 $GITHUB_WORKSPACE/artifacts/
+        cp $GITHUB_WORKSPACE/*/*.bz2 $GITHUB_WORKSPACE/artifacts/
         ls -l $GITHUB_WORKSPACE/artifacts
     - name: Upload Conda Packages as artifact
       uses: actions/upload-artifact@v1
