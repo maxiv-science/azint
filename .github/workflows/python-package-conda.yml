@@ -20,9 +20,10 @@ jobs:
     - name: Build package
       shell: bash -l {0}
       run: |
-        conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+        conda build 
+        mv $CONDA/conda-bld ./
     - uses: actions/upload-artifact@v2
       with:
-        name: conda package artifact
-        path: $GITHUB_WORKSPACE/*/*.bz2
+        name: package-${{ github.sha }}
+        path: ./conda-bld/*/*.bz2
      
