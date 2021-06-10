@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from _azint import generate_matrix, spmv
+from sparse import Sparse
 
 
 class Poni():
@@ -93,6 +93,8 @@ def calculate_minq(shape, poni: Poni, pixel_size: float):
     else:
         min2 = d2
     
+    if min1 == 0.0 and min2 == 0.0:
+        return 0.0
     rot = rotation_matrix(poni)
     pos = np.dot(rot, [min1, min2, poni.dist])
     r = np.sqrt(pos[0]**2 + pos[1]**2)
@@ -121,26 +123,29 @@ class AzimuthalIntegrator():
             mask = np.zeros(shape, dtype=np.uint8)
             
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
-        self.sparse_matrix = generate_matrix(poni, shape, pixel_size, n_splitting, mask, bins)
-            
+        self.sparse_matrix = Sparse(poni, shape, pixel_size, n_splitting, mask, bins)
         if solid_angle:
             d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - poni.poni1
             d2 = (np.arange(shape[1], dtype=np.float32) + 0.5) * pixel_size - poni.poni2
             p1, p2 = np.meshgrid(d2, d1)
             solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
-            self.norm = spmv(*self.sparse_matrix, solid_angle**3)
-            self.solid_angle3 = solid_angle**3
+            self.norm = self.sparse_matrix.spmv(solid_angle**3)
+            self.correction = solid_angle**3
         else:
-            self.norm = spmv(*self.sparse_matrix, np.ones(shape[0]*shape[1], dtype=np.float32))
+            self.correction = None
+            self.norm = self.sparse_matrix.spmv(np.ones(shape[0]*shape[1], dtype=np.float32))
             
-    def integrate(self, img):
-        signal = spmv(*self.sparse_matrix, img)
-        result = np.divide(signal, self.norm, out=np.zeros_like(signal), where=self.norm!=0.0)
-        return result.reshape(self.output_shape)
-    
-    def integrate_with_mask(self, img, mask):
-        inverted_mask = 1 - mask
-        signal = spmv(*self.sparse_matrix, inverted_mask*img)
-        norm = spmv(*self.sparse_matrix, inverted_mask*self.solid_angle3)
-        result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
+    def integrate(self, img, mask=None):
+        if mask is None:
+            norm = self.norm
+        else:
+            inverted_mask = 1 - mask
+            img = img*inverted_mask
+            if self.correction is not None:
+                norm = self.sparse_matrix.spmv(inverted_mask*self.correction)
+            else:
+                norm = self.sparse_matrix.spmv(inverted_mask)
+                
+        signal = self.sparse_matrix.spmv(img)
+        result = np.divide(signal, norm, out=np.zeros_like(signal), where=self.norm!=0.0)
         return result.reshape(self.output_shape)

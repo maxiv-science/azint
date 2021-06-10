@@ -1,13 +1,9 @@
 #define _USE_MATH_DEFINES
-#include <Python.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#define PY_ARRAY_UNIQUE_SYMBOL azint_ARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-#include <structmember.h>
-#include "vector.h"
+#include <vector>
+#include <iostream>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+namespace py = pybind11;
 
 struct Entry
 {
@@ -26,7 +22,7 @@ struct Poni
     float wavelength;
 };
 
-int bisect_right(int n, float* bins, float x)
+int bisect_right(int n, const float* bins, float x)
 {
     int lo = 0;
     int hi = n;
@@ -42,26 +38,15 @@ int bisect_right(int n, float* bins, float x)
     return lo;
 }
 
-double get_double(PyObject* obj, const char* key)
-{
-    PyObject* tmp = PyObject_GetAttrString(obj, key);
-    if (tmp == NULL) {
-        printf("tmp in get_double is null\n");
-    }
-    double value = PyFloat_AsDouble(tmp);
-    Py_DECREF(tmp);
-    return value;
-}
-
-void tocsr(Vector<Entry>* rows, int nrows,
-      Vector<int>& col_idx, Vector<int>& row_ptr, Vector<float>& values)
+void tocsr(std::vector<Entry>* rows, int nrows,
+      std::vector<int>& col_idx, std::vector<int>& row_ptr, std::vector<float>& values)
 {
     row_ptr.resize(nrows + 1);
     int nentry = 0;
     for (int i=0; i<nrows; i++) {
         row_ptr[i] = nentry;
         
-        Vector<Entry>& row = rows[i];
+        std::vector<Entry>& row = rows[i];
         size_t j=0;
         while (j < row.size()) {
             int col = row[j].col;
@@ -125,24 +110,8 @@ void rotation_matrix(float rot[3][3], Poni poni)
     matrix_multiplication(rot, tmp, rot1);
 }
 
-int get_shape(PyObject* py_shape, long shape[2])
-{
-    PyObject* seq = PySequence_Fast(py_shape, "expected a sequence for shape");
-    if (seq == NULL) {
-        return 1;
-    }
-    if (PySequence_Fast_GET_SIZE(seq) != 2) {
-        PyErr_SetString(PyExc_TypeError, "shape must have two dimensions");
-        return 1;
-    }
-    shape[0] = PyLong_AsLong(PySequence_Fast_GET_ITEM(seq, 0));
-    shape[1] = PyLong_AsLong(PySequence_Fast_GET_ITEM(seq, 1));
-    Py_DECREF(seq);
-    return 0;
-}
-
-void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, Vector<Entry>* rows,
-                      Poni& poni, int8_t* mask, int nradial_bins, float* radial_bins)
+void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::vector<Entry>* rows,
+                      const Poni& poni, const int8_t* mask, int nradial_bins, const float* radial_bins)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
@@ -181,9 +150,9 @@ void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, Vector
     }
 }
 
-void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, Vector<Entry>* rows,
-                      Poni& poni, int8_t* mask, 
-                      int nradial_bins, float* radial_bins,
+void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::vector<Entry>* rows,
+                      const Poni& poni, const int8_t* mask, 
+                      int nradial_bins, const float* radial_bins,
                       int nphi_bins, float* phi_bins)
 {
     float rot[3][3];
@@ -228,126 +197,69 @@ void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, Vector
     }
 }
 
-static PyObject*
-generate_matrix(PyObject* self, PyObject* args)
+class Sparse
 {
-    PyObject* py_poni;
-    PyObject* py_shape;
-    int n_splitting;
-    float pixel_size;
-    PyArrayObject* py_mask;
-    PyObject* py_bins;
-    if (!PyArg_ParseTuple(args, "OOfiO!O", 
-        &py_poni, 
-        &py_shape,
-        &pixel_size,
-        &n_splitting, 
-        &PyArray_Type, &py_mask, 
-        &py_bins)) {
-        return NULL;
-    }
+public:
+    Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
+           int n_splitting, py::array_t<int8_t> mask,
+            py::sequence bins);
+    py::array_t<float> spmv(py::array x);
+private:
+    std::vector<int> col_idx;
+    std::vector<int> row_ptr;
+    std::vector<float> values;
+};
+
+Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size, 
+               int n_splitting, py::array_t<int8_t> mask, py::sequence bins)
+{
+    Poni poni;
+    poni.dist = py_poni.attr("dist").cast<float>();
+    poni.poni1 = py_poni.attr("poni1").cast<float>();
+    poni.poni2 = py_poni.attr("poni2").cast<float>();
+    poni.rot1 = py_poni.attr("rot1").cast<float>();
+    poni.rot2 = py_poni.attr("rot2").cast<float>();
+    poni.rot3 = py_poni.attr("rot3").cast<float>();
+    poni.wavelength = py_poni.attr("wavelength").cast<float>();
     
     long shape[2];
-    if (get_shape(py_shape, shape)) {
-        return NULL;
-    }
-    
-    PyArrayObject* mask_array = (PyArrayObject*)PyArray_FromAny(
-        (PyObject*)py_mask, 
-        PyArray_DescrFromType(NPY_INT8), 
-        1, 2, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_FORCECAST, NULL);
-    
-    if (mask_array == NULL) {
-        printf("Error in PyArray_FromAny\n");
-    }
-    int8_t* mask = (int8_t*)PyArray_DATA(mask_array);
-    
-    Poni poni;
-    poni.dist = get_double(py_poni, "dist");
-    poni.poni1 = get_double(py_poni, "poni1");
-    poni.poni2 = get_double(py_poni, "poni2");
-    poni.rot1 = get_double(py_poni, "rot1");
-    poni.rot2 = get_double(py_poni, "rot2");
-    poni.rot3 = get_double(py_poni, "rot3");
-    poni.wavelength = get_double(py_poni, "wavelength");
+    shape[0] = py_shape[0].cast<long>();
+    shape[1] = py_shape[1].cast<long>();
     
     int nrows;
-    Vector<Entry>* rows;
-    
-    PyObject* seq = PySequence_Fast(py_bins, "expected a sequence for bins");
-    if (seq == NULL) {
-        return NULL;
-    }
-    
-    PyArrayObject* radial_array = (PyArrayObject*)PyArray_FromAny(
-        PySequence_Fast_GET_ITEM(seq, 0), 
-        PyArray_DescrFromType(NPY_FLOAT32), 
-        1, 1, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_FORCECAST, NULL);
-    int nradial_bins = PyArray_SIZE(radial_array) - 1;
-    float* radial_bins = (float*)PyArray_DATA(radial_array);
-    
+    std::vector<Entry>* rows;
+    py::array_t<float, py::array::c_style | py::array::forcecast> radial_bins(bins[0]);
+    int nradial_bins = radial_bins.size() - 1;
     // 1D integration
-    if (PySequence_Fast_GET_SIZE(seq) == 1) {
+    if (bins.size() == 1) {
         nrows = nradial_bins;
-        rows = new Vector<Entry>[nrows];
+        rows = new std::vector<Entry>[nrows];
         generate_matrix_1d(shape, n_splitting, pixel_size, rows, 
-                           poni, mask, nradial_bins, radial_bins);
+                           poni, mask.data(), nradial_bins, radial_bins.data());
     }
-    // 2D integration
-    else if (PySequence_Fast_GET_SIZE(seq) == 2) {
-        PyArrayObject* phi_array = (PyArrayObject*)PyArray_FromAny(
-            PySequence_Fast_GET_ITEM(seq, 1), 
-            PyArray_DescrFromType(NPY_FLOAT32), 
-            1, 1, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_FORCECAST, NULL);
-        
-        int nphi_bins = PyArray_SIZE(phi_array) - 1;
-        float* phi_bins = (float*)PyArray_DATA(phi_array);
-        nrows = nphi_bins * nradial_bins;
-        rows = new Vector<Entry>[nrows];
-        generate_matrix_2d(shape, n_splitting, pixel_size, rows, poni, mask, 
-                           nradial_bins, radial_bins,
-                           nphi_bins, phi_bins);
-        Py_DECREF(phi_array);
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "bins is tuple of radial and optionally phi bins");
-        return NULL;
-    }
-        
-    Py_DECREF(seq);
-    Py_DECREF(radial_array);
-    Py_DECREF(mask_array);
     
-    Vector<int> col_idx, row_ptr;
-    Vector<float> values;
-    // numpy will later take ownership of the memory
-    col_idx.leak();
-    row_ptr.leak();
-    values.leak();
+    // 2D integraion
+    if (bins.size() == 2) {
+    }
+    
+    
     tocsr(rows, nrows, col_idx, row_ptr, values);
     delete [] rows;
-    
-    PyObject* tuple = PyTuple_New(3);
-    
-    npy_intp dims[] = {static_cast<long>(col_idx.size())};
-    PyObject* py_array = PyArray_SimpleNewFromData(1, dims, NPY_INT32, col_idx.data());
-    PyArray_ENABLEFLAGS((PyArrayObject*) py_array, NPY_ARRAY_OWNDATA);
-    PyTuple_SetItem(tuple, 0, py_array);
-    
-    dims[0] = row_ptr.size();
-    py_array = PyArray_SimpleNewFromData(1, dims, NPY_INT32, row_ptr.data());
-    PyArray_ENABLEFLAGS((PyArrayObject*) py_array, NPY_ARRAY_OWNDATA);
-    PyTuple_SetItem(tuple, 1, py_array);
-    
-    dims[0] = values.size();
-    py_array = PyArray_SimpleNewFromData(1, dims, NPY_FLOAT32, values.data());
-    PyArray_ENABLEFLAGS((PyArrayObject*) py_array, NPY_ARRAY_OWNDATA);
-    PyTuple_SetItem(tuple, 2, py_array);
+    /*
+    py::tuple tuple = py::tuple(3);
+    tuple[0] = py::array_t<int>{static_cast<long int>(col_idx.size()), col_idx.data()};
+    tuple[1] = py::array_t<int>{static_cast<long int>(row_ptr.size()), row_ptr.data()};
+    tuple[2] = py::array_t<float>{static_cast<long int>(values.size()), values.data()};
     return tuple;
+    */
 }
 
 template <typename T>
-void _spmv(long nrows, int* col_idx, int* row_ptr, float* values, float* b, T* x)
+void _spmv(long nrows, const std::vector<int>& col_idx, 
+           const std::vector<int>& row_ptr, 
+           const std::vector<float>& values, 
+           float* b, 
+           const T* x)
 {
     for (long i=0; i<nrows; i++) {
         b[i] = 0.0f;
@@ -357,85 +269,30 @@ void _spmv(long nrows, int* col_idx, int* row_ptr, float* values, float* b, T* x
     }
 }
 
-static PyObject*
-spmv(PyObject* self, PyObject* args)
+py::array_t<float> Sparse::spmv(py::array x)
 {
-    PyArrayObject* col_idx_array;
-    PyArrayObject* row_ptr_array;
-    PyArrayObject* values_array;
-    PyArrayObject* x_array;
-    if (!PyArg_ParseTuple(args, "O!O!O!O!", 
-        &PyArray_Type, &col_idx_array, 
-        &PyArray_Type, &row_ptr_array, 
-        &PyArray_Type, &values_array,
-        &PyArray_Type, &x_array)) {
-        printf("Error parsing\n");
-        return NULL;
+    int nrows = row_ptr.size() - 1;
+    py::array_t<float,  py::array::c_style> b(nrows);
+    if (py::isinstance<py::array_t<uint16_t>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint16_t*)x.data());
     }
-    
-    npy_intp nrows = PyArray_SIZE(row_ptr_array) - 1;
-    npy_intp shape[] = {nrows};
-    PyObject* py_array = PyArray_SimpleNew(1, shape, NPY_FLOAT32);
-    
-    int* col_idx = (int*)PyArray_DATA(col_idx_array);
-    int* row_ptr = (int*)PyArray_DATA(row_ptr_array);
-    float* values = (float*)PyArray_DATA(values_array);
-    float* b = (float*)PyArray_DATA((PyArrayObject*)py_array);
-    
-    int type = PyArray_TYPE(x_array);
-    switch(type) {
-        case NPY_UINT16: {
-            uint16_t* x = (uint16_t*)PyArray_DATA(x_array);
-            _spmv(nrows, col_idx, row_ptr, values, b, x);
-            break;
-        }
-        case NPY_INT16: {
-            int16_t* x = (int16_t*)PyArray_DATA(x_array);
-            _spmv(nrows, col_idx, row_ptr, values, b, x);
-            break;
-        }
-        case NPY_UINT32: {
-            uint32_t* x = (uint32_t*)PyArray_DATA(x_array);
-            _spmv(nrows, col_idx, row_ptr, values, b, x);
-            break;
-        }
-        case NPY_INT32: {
-            int32_t* x = (int32_t*)PyArray_DATA(x_array);
-            _spmv(nrows, col_idx, row_ptr, values, b, x);
-            break;
-        }
-        case NPY_FLOAT32: {
-            float* x = (float*)PyArray_DATA(x_array);
-            _spmv(nrows, col_idx, row_ptr, values, b, x);
-            break;
-        }
-        default: {
-            PyErr_SetString(PyExc_ValueError, "Wrong type");
-            return NULL;
-        }
+    else if (py::isinstance<py::array_t<uint32_t>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint32_t*)x.data());
     }
-    return py_array;
+    else if (py::isinstance<py::array_t<int16_t>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int16_t*)x.data());
+    }
+    else if (py::isinstance<py::array_t<int32_t>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int32_t*)x.data());
+    }
+    else if (py::isinstance<py::array_t<float>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (float*)x.data());
+    }
+    return b;
 }
 
-static PyMethodDef AzintMethods[] = {
-    {"generate_matrix", generate_matrix, METH_VARARGS,
-     ""},
-     {"spmv", spmv, METH_VARARGS,
-     "dot product"},
-    {NULL, NULL, 0, NULL}
-};
-
-static PyModuleDef azintmodule = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "_azint",
-    .m_doc = "Example module that creates an extension type.",
-    .m_size = -1,
-    .m_methods = AzintMethods
-};
-
-PyMODINIT_FUNC
-PyInit__azint(void)
-{
-    import_array();
-    return PyModule_Create(&azintmodule);
+PYBIND11_MODULE(sparse, m) {
+    py::class_<Sparse>(m, "Sparse")
+        .def(py::init<py::object, py::tuple, float, int, py::array_t<int8_t>, py::sequence>())
+        .def("spmv", &Sparse::spmv);
 }
