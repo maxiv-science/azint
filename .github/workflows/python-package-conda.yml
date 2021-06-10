@@ -20,7 +20,7 @@ jobs:
     - name: Build package
       shell: bash -l {0}
       run: |
-        conda build 
+        conda build $GITHUB_WORKSPACE
         mv $CONDA/conda-bld ./
     - uses: actions/upload-artifact@v2
       with:
