@@ -17,6 +17,7 @@ requirements:
   host:
     - python
     - numpy
+    - pybind11
     
   run:
     - python
