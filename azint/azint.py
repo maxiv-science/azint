@@ -106,11 +106,11 @@ def calculate_minq(shape, poni: Poni, pixel_size: float):
 class AzimuthalIntegrator():
     def __init__(self, poni_file, shape, pixel_size, n_splitting, 
                  bins, mask=None, solid_angle=True):
-        poni = Poni(poni_file)
+        self.poni = Poni(poni_file)
         qbins = bins[0]
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
-            minq = calculate_minq(shape, poni, pixel_size)
-            maxq = calculate_maxq(shape, poni, pixel_size)
+            minq = calculate_minq(shape, self.poni, pixel_size)
+            maxq = calculate_maxq(shape, self.poni, pixel_size)
             bins[0] = np.linspace(minq, maxq, qbins+1)
             
         self.q = 0.5*(bins[0][1:] + bins[0][:-1])
@@ -123,12 +123,12 @@ class AzimuthalIntegrator():
             mask = np.zeros(shape, dtype=np.uint8)
             
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
-        self.sparse_matrix = Sparse(poni, shape, pixel_size, n_splitting, mask, bins)
+        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins)
         if solid_angle:
-            d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - poni.poni1
-            d2 = (np.arange(shape[1], dtype=np.float32) + 0.5) * pixel_size - poni.poni2
+            d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - self.poni.poni1
+            d2 = (np.arange(shape[1], dtype=np.float32) + 0.5) * pixel_size - self.poni.poni2
             p1, p2 = np.meshgrid(d2, d1)
-            solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
+            solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)
             self.norm = self.sparse_matrix.spmv(solid_angle**3)
             self.correction = solid_angle**3
         else:
