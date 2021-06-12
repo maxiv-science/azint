@@ -22,7 +22,7 @@ jobs:
       run: |
         conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
         mkdir $GITHUB_WORKSPACE/artifacts
-        cp $GITHUB_WORKSPACE/*/azint*.bz2 $GITHUB_WORKSPACE/artifacts/
+        cp $GITHUB_WORKSPACE/**/azint*.bz2 $GITHUB_WORKSPACE/artifacts/
     - uses: actions/upload-artifact@v2
       with:
         name: package-${{ github.sha }}
