@@ -24,5 +24,5 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: package-${{ github.sha }}
-        path: $GITHUB_WORKSPACE/**/azint*.bz2
+        path: ${{ github.workspace }}/**/azint*.bz2
      
