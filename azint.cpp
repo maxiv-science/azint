@@ -153,7 +153,7 @@ void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::v
 void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::vector<Entry>* rows,
                       const Poni& poni, const int8_t* mask, 
                       int nradial_bins, const float* radial_bins,
-                      int nphi_bins, float* phi_bins)
+                      int nphi_bins, const float* phi_bins)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
@@ -240,18 +240,18 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
     
     // 2D integraion
     if (bins.size() == 2) {
+        py::array_t<float, py::array::c_style | py::array::forcecast> phi_bins(bins[1]);
+        int nphi_bins = phi_bins.size() - 1;
+        nrows = nphi_bins * nradial_bins;
+        rows = new std::vector<Entry>[nrows];
+        generate_matrix_2d(shape, n_splitting, pixel_size, rows, poni, mask.data(), 
+                           nradial_bins, radial_bins.data(),
+                           nphi_bins, phi_bins.data());
     }
     
     
     tocsr(rows, nrows, col_idx, row_ptr, values);
     delete [] rows;
-    /*
-    py::tuple tuple = py::tuple(3);
-    tuple[0] = py::array_t<int>{static_cast<long int>(col_idx.size()), col_idx.data()};
-    tuple[1] = py::array_t<int>{static_cast<long int>(row_ptr.size()), row_ptr.data()};
-    tuple[2] = py::array_t<float>{static_cast<long int>(values.size()), values.data()};
-    return tuple;
-    */
 }
 
 template <typename T>

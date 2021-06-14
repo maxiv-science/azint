@@ -1,7 +1,8 @@
 import os
 import numpy as np
 from sparse import Sparse
-
+from typing import Optional, Union
+from collections.abc import Sequence
 
 class Poni():
     def __init__(self, filename):
@@ -104,8 +105,29 @@ def calculate_minq(shape, poni: Poni, pixel_size: float):
     return q
 
 class AzimuthalIntegrator():
-    def __init__(self, poni_file, shape, pixel_size, n_splitting, 
-                 bins, mask=None, solid_angle=True):
+    """
+    This class is an azimuthal integrator 
+    """
+    def __init__(self, 
+                 poni_file: str, 
+                 shape: tuple[int, int], 
+                 pixel_size: float, 
+                 n_splitting: int, 
+                 bins: list[Union[int, Sequence], Optional[Sequence]], 
+                 mask: np.ndarray = None, 
+                 solid_angle: bool = True):
+        """
+        Args:
+            poni_file: Name of Poni file that sets up the geometry
+                of the integrator
+            shape: Shape of the images to be integrated
+            pixel_size: Pixel size of detector
+            n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually
+            bins: list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.
+                Phi bins is a sequence
+            mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
+            solid_angle: Perform solid angle correction
+        """
         self.poni = Poni(poni_file)
         qbins = bins[0]
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
@@ -135,7 +157,18 @@ class AzimuthalIntegrator():
             self.correction = None
             self.norm = self.sparse_matrix.spmv(np.ones(shape[0]*shape[1], dtype=np.float32))
             
-    def integrate(self, img, mask=None):
+    def integrate(self, 
+                  img: np.ndarray, 
+                  mask: np.ndarray = None) -> np.ndarray:
+        """
+        Calculate the azimuthal integrated profile
+        Args:
+            img: Input image to be integrated
+            mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
+                the constructor is more efficient
+        Returns:
+            azimuthal integrated image
+        """
         if mask is None:
             norm = self.norm
         else:
