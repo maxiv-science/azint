@@ -1,15 +1,18 @@
 import numpy as np
 from setuptools import setup, find_packages, Extension
+from pybind11.setup_helpers import Pybind11Extension
 
-extentions = Extension('_azint',
-                    language='c++',
-                    sources = ['azint.cpp'],
-                    include_dirs=[np.get_include()])
+ext_modules = [
+    Pybind11Extension(
+        'sparse',
+        ['azint.cpp'],  # Sort source files for reproducibility
+    ),
+]
 
 setup(
     name = 'azint',
-    version = '0.1',
+    version = '0.5',
     description = 'Azimthual Integration',
-    ext_modules = [extentions],
+    ext_modules = ext_modules,
     packages=find_packages(),
 ) 

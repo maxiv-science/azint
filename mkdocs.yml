@@ -1,0 +1,18 @@
+site_name: azint
+site_url: https://example.com/
+
+theme:
+  name: "material"
+  
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings 
+
+nav:
+  - Home: index.md
+  - Code Reference:
+    - azint: azint-reference.md
