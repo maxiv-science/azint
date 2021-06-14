@@ -460,7 +460,8 @@ of the integrator</p></td>
       <tr>
         <td><code>bins</code></td>
         <td><code>list</code></td>
-        <td><p>tuple of q and optionally phi bins. q bins can either be number of bins or sequence defining the bins</p></td>
+        <td><p>list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.
+Phi bins is a sequence</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
@@ -494,7 +495,8 @@ of the integrator</p></td>
 <span class="sd">        shape: Shape of the images to be integrated</span>
 <span class="sd">        pixel_size: Pixel size of detector</span>
 <span class="sd">        n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually</span>
-<span class="sd">        bins: tuple of q and optionally phi bins. q bins can either be number of bins or sequence defining the bins</span>
+<span class="sd">        bins: list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.</span>
+<span class="sd">            Phi bins is a sequence</span>
 <span class="sd">        mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded</span>
 <span class="sd">        solid_angle: Perform solid angle correction</span>
 <span class="sd">    &quot;&quot;&quot;</span>
