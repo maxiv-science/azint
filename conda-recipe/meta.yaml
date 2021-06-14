@@ -15,12 +15,19 @@ requirements:
     - {{ compiler('cxx') }}
 
   host:
-    - python
     - numpy
     - pybind11
     
   run:
-    - python
     - numpy
+    
+test:
+  source_files:
+    - tests/*.py
+    - tests/test.poni
+  requires:
+    - pytest
+  commands:
+    - pytest tests/
 
  
