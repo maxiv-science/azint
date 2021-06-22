@@ -127,6 +127,10 @@ class AzimuthalIntegrator():
                 Phi bins is a sequence
             mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
             solid_angle: Perform solid angle correction
+            
+        Attributes:
+            q (ndarray): q bins defined as q = 4pi/lambda sin(theta) in nm-1
+            phi (ndarray, optional): phi bins is case of 2D integration
         """
         self.poni = Poni(poni_file)
         qbins = bins[0]
