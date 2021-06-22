@@ -478,6 +478,28 @@ Phi bins is a sequence</p></td>
       </tr>
   </tbody>
 </table>
+<p><strong>Attributes:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>q</code></td>
+        <td><code>ndarray</code></td>
+        <td><p>q bins defined as q = 4pi/lambda sin(theta) in nm-1</p></td>
+      </tr>
+      <tr>
+        <td><code>phi</code></td>
+        <td><code>ndarray</code></td>
+        <td><p>phi bins is case of 2D integration</p></td>
+      </tr>
+  </tbody>
+</table>
         <details class="quote">
           <summary>Source code in <code>azint/azint.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
@@ -499,6 +521,10 @@ Phi bins is a sequence</p></td>
 <span class="sd">            Phi bins is a sequence</span>
 <span class="sd">        mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded</span>
 <span class="sd">        solid_angle: Perform solid angle correction</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        q (ndarray): q bins defined as q = 4pi/lambda sin(theta) in nm-1</span>
+<span class="sd">        phi (ndarray, optional): phi bins is case of 2D integration</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">poni</span> <span class="o">=</span> <span class="n">Poni</span><span class="p">(</span><span class="n">poni_file</span><span class="p">)</span>
     <span class="n">qbins</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
