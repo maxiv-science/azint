@@ -50,59 +50,11 @@ def rotation_matrix(poni: Poni):
     rotation_matrix = np.dot(np.dot(rot3, rot2), rot1)
     return rotation_matrix
 
-# calculate max q value from the 4 corners of the detector
-def calculate_maxq(shape, poni: Poni, pixel_size: float):
-    rot = rotation_matrix(poni)
-    maxq = 0.0
-    n, m = shape[0] - 1, shape[1] -1
-    i1 = [0, 0, n, n]
-    i2 = [0, m, 0, m]
-    for i in range(4):
-        p = [(i1[i] + 0.5) * pixel_size - poni.poni1,
-             (i2[i] + 0.5) * pixel_size - poni.poni2,
-             poni.dist
-        ]
-        pos = np.dot(rot, p)
-        r = np.sqrt(pos[0]**2 + pos[1]**2)
-        tth = np.arctan2(r, pos[2])
-        # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
-        q = 4.0e-9 * np.pi / poni.wavelength * np.sin(0.5*tth)
-        if q > maxq:
-            maxq = q
-    return maxq
-
-def calculate_minq(shape, poni: Poni, pixel_size: float):
-    height = shape[0]*pixel_size
-    width = shape[1]*pixel_size
-
-    # center of detector
-    c1, c2 = 0.5*height, 0.5*width
-
-    p1, p2 = poni.poni1, poni.poni2
-    
-    # distance from center of detector to point p
-    d1 = max(abs(p1 - c1) - height / 2, 0)
-    d2 = max(abs(p2 - c2) - width / 2, 0)
-    
-    if p1 > c1:
-        min1 = -d1
-    else:
-        min1 = d1
-
-    if p2 > c2:
-        min2 = -d2
-    else:
-        min2 = d2
-    
-    if min1 == 0.0 and min2 == 0.0:
-        return 0.0
-    rot = rotation_matrix(poni)
-    pos = np.dot(rot, [min1, min2, poni.dist])
-    r = np.sqrt(pos[0]**2 + pos[1]**2)
-    tth = np.arctan2(r, pos[2])
-    # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
-    q = 4.0e-9 * np.pi / poni.wavelength * np.sin(0.5*tth)
-    return q
+def calc_coordinates(shape, pixel_size, poni):
+    d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - poni.poni1
+    d2 = (np.arange(shape[1], dtype=np.float32) + 0.5) * pixel_size - poni.poni2
+    p2, p1 = np.meshgrid(d2, d1)
+    return p1, p2
 
 class AzimuthalIntegrator():
     """
@@ -133,11 +85,16 @@ class AzimuthalIntegrator():
             phi (ndarray, optional): phi bins is case of 2D integration
         """
         self.poni = Poni(poni_file)
+        p1, p2 = None, None
         qbins = bins[0]
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
-            minq = calculate_minq(shape, self.poni, pixel_size)
-            maxq = calculate_maxq(shape, self.poni, pixel_size)
-            bins[0] = np.linspace(minq, maxq, qbins+1)
+            p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
+            pos = np.dot(rotation_matrix(self.poni), [p1, p2, self.poni.dist])
+            r = np.sqrt(pos[0]**2 + pos[1]**2)
+            tth = np.arctan2(r, pos[2])
+            # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
+            q = 4.0e-9 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
+            bins[0] = np.linspace(np.amin(q), np.amax(q), qbins+1)
             
         self.q = 0.5*(bins[0][1:] + bins[0][:-1])
         if len(bins) == 2:
@@ -151,9 +108,8 @@ class AzimuthalIntegrator():
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins)
         if solid_angle:
-            d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - self.poni.poni1
-            d2 = (np.arange(shape[1], dtype=np.float32) + 0.5) * pixel_size - self.poni.poni2
-            p1, p2 = np.meshgrid(d2, d1)
+            if p1 is None:
+                p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
             solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)
             self.norm = self.sparse_matrix.spmv(solid_angle**3)
             self.correction = solid_angle**3
