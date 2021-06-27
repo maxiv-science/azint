@@ -89,7 +89,9 @@ class AzimuthalIntegrator():
         qbins = bins[0]
         if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
             p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
-            pos = np.dot(rotation_matrix(self.poni), [p1, p2, self.poni.dist])
+            p3 = np.ones(np.prod(shape), dtype=np.float32)*self.poni.dist
+            pos = np.dot(rotation_matrix(self.poni), 
+                         np.vstack((p1.reshape(-1), p2.reshape(-1), p3)))
             r = np.sqrt(pos[0]**2 + pos[1]**2)
             tth = np.arctan2(r, pos[2])
             # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
