@@ -105,6 +105,7 @@ class AzimuthalIntegrator():
         if mask is None:
             mask = np.zeros(shape, dtype=np.uint8)
             
+        self.input_size = np.prod(shape)
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins)
         if solid_angle:
@@ -129,6 +130,8 @@ class AzimuthalIntegrator():
         Returns:
             azimuthal integrated image
         """
+        if img.size != self.input_size:
+            raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
         if mask is None:
             norm = self.norm
         else:
