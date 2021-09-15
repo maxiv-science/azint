@@ -273,11 +273,17 @@ py::array_t<float> Sparse::spmv(py::array x)
 {
     int nrows = row_ptr.size() - 1;
     py::array_t<float,  py::array::c_style> b(nrows);
-    if (py::isinstance<py::array_t<uint16_t>>(x)) {
+    if (py::isinstance<py::array_t<uint8_t>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint8_t*)x.data());
+    }
+    else if (py::isinstance<py::array_t<uint16_t>>(x)) {
         _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint16_t*)x.data());
     }
     else if (py::isinstance<py::array_t<uint32_t>>(x)) {
         _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint32_t*)x.data());
+    }
+    else if (py::isinstance<py::array_t<int8_t>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int8_t*)x.data());
     }
     else if (py::isinstance<py::array_t<int16_t>>(x)) {
         _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int16_t*)x.data());
@@ -287,6 +293,9 @@ py::array_t<float> Sparse::spmv(py::array x)
     }
     else if (py::isinstance<py::array_t<float>>(x)) {
         _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (float*)x.data());
+    }
+    else if (py::isinstance<py::array_t<double>>(x)) {
+        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (double*)x.data());
     }
     return b;
 }

@@ -145,5 +145,5 @@ class AzimuthalIntegrator():
                 norm = self.sparse_matrix.spmv(inverted_mask)
                 
         signal = self.sparse_matrix.spmv(img)
-        result = np.divide(signal, norm, out=np.zeros_like(signal), where=self.norm!=0.0)
+        result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
         return result.reshape(self.output_shape)

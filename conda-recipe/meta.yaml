@@ -1,8 +1,8 @@
-{% set version = "0.5.4" %}
+{% set data = load_setup_py_data() %}
 
 package:
   name: azint
-  version: {{ version }}
+  version: {{ data.get('version') }}
 
 source:
   path: ..
