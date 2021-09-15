@@ -1,4 +1,3 @@
-import numpy as np
 from setuptools import setup, find_packages, Extension
 from pybind11.setup_helpers import Pybind11Extension
 
