@@ -67,7 +67,8 @@ class AzimuthalIntegrator():
                  n_splitting: int, 
                  bins: list[Union[int, Sequence], Optional[Sequence]], 
                  mask: np.ndarray = None, 
-                 solid_angle: bool = True):
+                 solid_angle: bool = True,
+                 polarization_factor: Optional[float] = None):
         """
         Args:
             poni_file: Name of Poni file that sets up the geometry
@@ -79,25 +80,31 @@ class AzimuthalIntegrator():
                 Phi bins is a sequence
             mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
             solid_angle: Perform solid angle correction
+            polarization_factor: Polarization factor for the polarization correction
+                1 (linear horizontal polarization)
+                -1 (linear vertical polarization)
             
         Attributes:
             q (ndarray): q bins defined as q = 4pi/lambda sin(theta) in nm-1
             phi (ndarray, optional): phi bins is case of 2D integration
         """
         self.poni = Poni(poni_file)
-        p1, p2 = None, None
-        qbins = bins[0]
-        if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
-            p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
-            p3 = np.ones(np.prod(shape), dtype=np.float32)*self.poni.dist
-            pos = np.dot(rotation_matrix(self.poni), 
+        
+        p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
+        p3 = np.ones(np.prod(shape), dtype=np.float32)*self.poni.dist
+        pos = np.dot(rotation_matrix(self.poni), 
                          np.vstack((p1.reshape(-1), p2.reshape(-1), p3)))
-            r = np.sqrt(pos[0]**2 + pos[1]**2)
-            tth = np.arctan2(r, pos[2])
+        r = np.sqrt(pos[0]**2 + pos[1]**2)
+        tth = np.arctan2(r, pos[2])
+        
+        qbins = bins[0]
+        # calculate auto range min/max q bins
+        if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
             # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
             q = 4.0e-9 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
             bins[0] = np.linspace(np.amin(q), np.amax(q), qbins+1)
             
+        # bin centers
         self.q = 0.5*(bins[0][1:] + bins[0][:-1])
         if len(bins) == 2:
             self.phi = 0.5*(bins[1][1:] + bins[1][:-1])
@@ -110,15 +117,18 @@ class AzimuthalIntegrator():
         self.input_size = np.prod(shape)
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
         self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins)
+        self.corrections = np.ones(shape[0]*shape[1], dtype=np.float32)
         if solid_angle:
-            if p1 is None:
-                p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
             solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)
-            self.norm = self.sparse_matrix.spmv(solid_angle**3)
-            self.correction = solid_angle**3
-        else:
-            self.correction = None
-            self.norm = self.sparse_matrix.spmv(np.ones(shape[0]*shape[1], dtype=np.float32))
+            self.corrections *= (solid_angle**3).reshape(-1)
+            
+        if polarization_factor:
+            phi = np.arctan2(pos[0], pos[1])
+            cos2_tth = np.cos(tth) ** 2
+            polarization = 0.5 * (1.0 + cos2_tth - polarization_factor * np.cos(2.0 * (phi)) * (1.0 - cos2_tth))
+            self.corrections *= polarization.reshape(-1)
+            
+        self.norm = self.sparse_matrix.spmv(self.corrections)
             
     def integrate(self, 
                   img: np.ndarray, 
@@ -139,10 +149,7 @@ class AzimuthalIntegrator():
         else:
             inverted_mask = 1 - mask
             img = img*inverted_mask
-            if self.correction is not None:
-                norm = self.sparse_matrix.spmv(inverted_mask*self.correction)
-            else:
-                norm = self.sparse_matrix.spmv(inverted_mask)
+            norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1)*self.corrections)
                 
         signal = self.sparse_matrix.spmv(img)
         result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)

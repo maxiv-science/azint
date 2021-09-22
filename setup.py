@@ -10,7 +10,7 @@ ext_modules = [
 
 setup(
     name = 'azint',
-    version = '0.5.5',
+    version = '0.6.0',
     description = 'Azimthual Integration',
     ext_modules = ext_modules,
     packages=find_packages(),
