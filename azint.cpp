@@ -157,7 +157,7 @@ void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::v
                     int bin_index = radial_index;
                     auto& row = segments[rank].rows[bin_index];
                     // sum duplicate entries
-                    if (row.size() > 1 && row.back().col == pixel_index) {
+                    if (row.size() > 0 && (row.back().col == pixel_index)) {
                         row.back().value += 1.0f / (n_splitting * n_splitting);
                     }
                     else {
@@ -213,7 +213,7 @@ void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::v
                     
                     auto& row = segments[rank].rows[bin_index];
                     // sum duplicate entries
-                    if (row.size() > 1 && row.back().col == pixel_index) {
+                    if (row.size() > 0 && (row.back().col == pixel_index)) {
                         row.back().value += 1.0f / (n_splitting * n_splitting);
                     }
                     else {
