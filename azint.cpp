@@ -1,4 +1,5 @@
 #define _USE_MATH_DEFINES
+#include <omp.h>
 #include <vector>
 #include <iostream>
 #include <pybind11/pybind11.h>
@@ -7,8 +8,16 @@ namespace py = pybind11;
 
 struct Entry
 {
+    Entry(int c, float v) : col(c), value(v) {}
     int col;
     float value;
+};
+
+struct RListMatrix
+{
+    RListMatrix(int nrows) : rows(nrows), nelements(0) {}
+    std::vector<std::vector<Entry> > rows;
+    size_t nelements;
 };
 
 struct Poni
@@ -38,7 +47,7 @@ int bisect_right(int n, const float* bins, float x)
     return lo;
 }
 
-void tocsr(std::vector<Entry>* rows, int nrows,
+void tocsr(std::vector<RListMatrix>& segments, int nrows,
       std::vector<int>& col_idx, std::vector<int>& row_ptr, std::vector<float>& values)
 {
     row_ptr.resize(nrows + 1);
@@ -46,21 +55,23 @@ void tocsr(std::vector<Entry>* rows, int nrows,
     for (int i=0; i<nrows; i++) {
         row_ptr[i] = nentry;
         
-        std::vector<Entry>& row = rows[i];
-        size_t j=0;
-        while (j < row.size()) {
-            int col = row[j].col;
-            float value = row[j].value;
-            //printf("value %.2f\n", value);
-            j++;
-            // sum duplicate entries
-            while (j < row.size() && row[j].col == col) {
-                value += row[j].value;
+        for (size_t rank=0; rank<segments.size(); rank++) {
+            const std::vector<Entry>& row = segments[rank].rows[i];
+            size_t j=0;
+            while (j < row.size()) {
+                int col = row[j].col;
+                float value = row[j].value;
+                //printf("value %.2f\n", value);
                 j++;
+                // sum duplicate entries
+                while (j < row.size() && row[j].col == col) {
+                    value += row[j].value;
+                    j++;
+                }
+                col_idx.push_back(col);
+                values.push_back(value);
+                nentry++;
             }
-            col_idx.push_back(col);
-            values.push_back(value);
-            nentry++;
         }
     }
     row_ptr[nrows] = nentry;
@@ -110,13 +121,15 @@ void rotation_matrix(float rot[3][3], Poni poni)
     matrix_multiplication(rot, tmp, rot1);
 }
 
-void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::vector<Entry>* rows,
+void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::vector<RListMatrix>& segments,
                       const Poni& poni, const int8_t* mask, int nradial_bins, const float* radial_bins)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
     
+    #pragma omp parallel for schedule(static)
     for (int i=0; i<shape[0]; i++) {
+        int rank = omp_get_thread_num();
         for (int j=0; j<shape[1]; j++) {
             int pixel_index = i*shape[1] + j;
             if (mask[pixel_index]) {
@@ -142,15 +155,21 @@ void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::v
                     }
                     
                     int bin_index = radial_index;
-                    Entry entry = {pixel_index, 1.0f / (n_splitting * n_splitting)};
-                    rows[bin_index].push_back(entry);
+                    auto& row = segments[rank].rows[bin_index];
+                    // sum duplicate entries
+                    if (row.size() > 1 && row.back().col == pixel_index) {
+                        row.back().value += 1.0f / (n_splitting * n_splitting);
+                    }
+                    else {
+                        row.emplace_back(pixel_index, 1.0f / (n_splitting * n_splitting));
+                    }
                 }
             }
         }
     }
 }
 
-void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::vector<Entry>* rows,
+void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::vector<RListMatrix>& segments,
                       const Poni& poni, const int8_t* mask, 
                       int nradial_bins, const float* radial_bins,
                       int nphi_bins, const float* phi_bins)
@@ -158,7 +177,9 @@ void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::v
     float rot[3][3];
     rotation_matrix(rot, poni);
     
+    #pragma omp parallel for schedule(static)
     for (int i=0; i<shape[0]; i++) {
+        int rank = omp_get_thread_num();
         for (int j=0; j<shape[1]; j++) {
             int pixel_index = i*shape[1] + j;
             if (mask[pixel_index]) {
@@ -189,8 +210,15 @@ void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::v
                         continue;
                     }
                     int bin_index = phi_index * nradial_bins + radial_index;
-                    Entry entry = {pixel_index, 1.0f / (n_splitting * n_splitting)};
-                    rows[bin_index].push_back(entry);
+                    
+                    auto& row = segments[rank].rows[bin_index];
+                    // sum duplicate entries
+                    if (row.size() > 1 && row.back().col == pixel_index) {
+                        row.back().value += 1.0f / (n_splitting * n_splitting);
+                    }
+                    else {
+                        row.emplace_back(pixel_index, 1.0f / (n_splitting * n_splitting));
+                    }
                 }
             }
         }
@@ -226,15 +254,17 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
     shape[0] = py_shape[0].cast<long>();
     shape[1] = py_shape[1].cast<long>();
     
-    int nrows;
-    std::vector<Entry>* rows;
+    int nrows = 0;
+    int max_threads = omp_get_max_threads();
+    std::vector<RListMatrix> segments;
+    
     py::array_t<float, py::array::c_style | py::array::forcecast> radial_bins(bins[0]);
     int nradial_bins = radial_bins.size() - 1;
     // 1D integration
     if (bins.size() == 1) {
         nrows = nradial_bins;
-        rows = new std::vector<Entry>[nrows];
-        generate_matrix_1d(shape, n_splitting, pixel_size, rows, 
+        segments.resize(max_threads, nrows);
+        generate_matrix_1d(shape, n_splitting, pixel_size, segments, 
                            poni, mask.data(), nradial_bins, radial_bins.data());
     }
     
@@ -243,15 +273,13 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
         py::array_t<float, py::array::c_style | py::array::forcecast> phi_bins(bins[1]);
         int nphi_bins = phi_bins.size() - 1;
         nrows = nphi_bins * nradial_bins;
-        rows = new std::vector<Entry>[nrows];
-        generate_matrix_2d(shape, n_splitting, pixel_size, rows, poni, mask.data(), 
+        segments.resize(max_threads, nrows);
+        generate_matrix_2d(shape, n_splitting, pixel_size, segments, poni, mask.data(), 
                            nradial_bins, radial_bins.data(),
                            nphi_bins, phi_bins.data());
     }
     
-    
-    tocsr(rows, nrows, col_idx, row_ptr, values);
-    delete [] rows;
+    tocsr(segments, nrows, col_idx, row_ptr, values);
 }
 
 template <typename T>
