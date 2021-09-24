@@ -7,13 +7,13 @@ img = np.ones((1000, 1000), dtype=np.uint16)
 
 def test1d():
     ai = AzimuthalIntegrator(poni_file, img.shape, pixel_size, 4, [1000,], solid_angle=False) 
-    res = ai.integrate(img)
+    res, _ = ai.integrate(img)
     assert(np.allclose(res, 1.0))
     
 def test2d():
     phi_bins = np.linspace(-np.pi, np.pi, 121)
     ai = AzimuthalIntegrator(poni_file, img.shape, pixel_size, 4, [1000, phi_bins], solid_angle=False) 
-    res = ai.integrate(img)
+    res, _ = ai.integrate(img)
     # set emtpy bins to nan to conserve the mean
     res[res==0.0] = np.nan
     assert(np.allclose(np.nanmean(res, axis=0), 1.0))

@@ -68,7 +68,8 @@ class AzimuthalIntegrator():
                  bins: list[Union[int, Sequence], Optional[Sequence]], 
                  mask: np.ndarray = None, 
                  solid_angle: bool = True,
-                 polarization_factor: Optional[float] = None):
+                 polarization_factor: Optional[float] = None,
+                 error_model: Optional[str] = None):
         """
         Args:
             poni_file: Name of Poni file that sets up the geometry
@@ -88,6 +89,14 @@ class AzimuthalIntegrator():
             q (ndarray): q bins defined as q = 4pi/lambda sin(theta) in nm-1
             phi (ndarray, optional): phi bins is case of 2D integration
         """
+        
+        if error_model and error_model != 'poisson':
+            raise RuntimeError('Only poisson error model is supported')
+        
+        if error_model and n_splitting > 1:
+            raise RuntimeError('Cannot estimate errors with pixel splitting.\n Set n_splitting to 1 for error estimation')
+        
+        self.error_model = error_model
         self.poni = Poni(poni_file)
         
         p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
@@ -132,7 +141,7 @@ class AzimuthalIntegrator():
             
     def integrate(self, 
                   img: np.ndarray, 
-                  mask: np.ndarray = None) -> np.ndarray:
+                  mask: Optional[np.ndarray] = None) -> tuple[np.ndarray, Optional[np.ndarray]]:
         """
         Calculate the azimuthal integrated profile
         Args:
@@ -140,7 +149,7 @@ class AzimuthalIntegrator():
             mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
                 the constructor is more efficient
         Returns:
-            azimuthal integrated image
+            azimuthal integrated image and optionally error estimate sigma when error_model is specified
         """
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
@@ -153,4 +162,13 @@ class AzimuthalIntegrator():
                 
         signal = self.sparse_matrix.spmv(img)
         result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-        return result.reshape(self.output_shape)
+        result = result.reshape(self.output_shape)
+        
+        if self.error_model:
+            # poisson error model
+            sigma = np.sqrt(signal)
+            sigma = np.divide(sigma, norm, out=np.zeros_like(sigma), where=norm!=0.0)
+            sigma = sigma.reshape(self.output_shape)
+            return result, sigma
+        else:
+            return result, None
