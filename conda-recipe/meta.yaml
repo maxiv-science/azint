@@ -27,6 +27,7 @@ test:
     - tests/test.poni
   requires:
     - pytest
+    - psutil
   commands:
     - pytest tests/
 
