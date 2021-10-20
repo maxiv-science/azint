@@ -17,7 +17,7 @@ def benchmark():
     ai = AzimuthalIntegrator(poni,
                             (2167, 2070),
                             75.0e-6, 4,
-                            [2000,],
+                            2000,
                             solid_angle=True)
     end = time.perf_counter()
     print('Initialization time %.1fs' %(end - start))

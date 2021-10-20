@@ -2,8 +2,7 @@ import os
 import numpy as np
 from sparse import Sparse
 from typing import Optional, Union
-from collections.abc import Sequence
-from collections.abc import Iterable
+from collections.abc import Sequence, Iterable
 
 class Poni():
     def __init__(self, filename):
