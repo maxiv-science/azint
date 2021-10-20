@@ -176,7 +176,9 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                     int bin_index;
                     // 2D integration
                     if (phi_bins) {
-                        float phi = atan2f(pos[0], pos[1]);
+                        //float phi = atan2f(pos[0], pos[1]);
+                        // convert atan2 from [-pi, pi] to [0, 360] degrees
+                        float phi = atan2f(-pos[1], -pos[0]) / M_PI*180.0f + 180.0f;
                         int phi_index = bisect_right(nphi_bins+1, phi_bins, phi) - 1;
                         if ((phi_index < 0) || (phi_index >= nphi_bins)) {
                             continue;
@@ -207,7 +209,7 @@ class Sparse
 public:
     Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
            int n_splitting, py::array_t<int8_t> mask,
-            py::sequence bins);
+            py::sequence bins, const std::string& unit);
     py::array_t<float> spmv(py::array x);
 private:
     std::vector<int> col_idx;
@@ -216,7 +218,8 @@ private:
 };
 
 Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size, 
-               int n_splitting, py::array_t<int8_t> mask, py::sequence bins)
+               int n_splitting, py::array_t<int8_t> mask,
+               py::sequence bins, const std::string& unit)
 {
     Poni poni;
     poni.dist = py_poni.attr("dist").cast<float>();
@@ -226,6 +229,11 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
     poni.rot2 = py_poni.attr("rot2").cast<float>();
     poni.rot3 = py_poni.attr("rot3").cast<float>();
     poni.wavelength = py_poni.attr("wavelength").cast<float>();
+    
+    Unit output_unit = Unit::q;
+    if (unit == "2th") {
+        output_unit = Unit::tth;
+    }
     
     long shape[2];
     shape[0] = py_shape[0].cast<long>();
@@ -244,7 +252,7 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
         generate_matrix(shape, n_splitting, pixel_size, 
                         segments, poni, mask.data(), 
                         nradial_bins, radial_bins.data(),
-                        0, nullptr, Unit::q);
+                        0, nullptr, output_unit);
     }
     
     // 2D integraion
@@ -256,7 +264,7 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
         generate_matrix(shape, n_splitting, pixel_size, 
                            segments, poni, mask.data(), 
                            nradial_bins, radial_bins.data(),
-                           nphi_bins, phi_bins.data(), Unit::q);
+                           nphi_bins, phi_bins.data(), output_unit);
     }
     
     tocsr(segments, nrows, col_idx, row_ptr, values);
@@ -312,6 +320,6 @@ py::array_t<float> Sparse::spmv(py::array x)
 
 PYBIND11_MODULE(sparse, m) {
     py::class_<Sparse>(m, "Sparse")
-        .def(py::init<py::object, py::tuple, float, int, py::array_t<int8_t>, py::sequence>())
+        .def(py::init<py::object, py::tuple, float, int, py::array_t<int8_t>, py::sequence, std::string>())
         .def("spmv", &Sparse::spmv);
 }

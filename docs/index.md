@@ -24,7 +24,7 @@ img = fabio.open('Eiger4M_Al2O3_13.45keV.edf').data
 mask = fabio.open('mask.tif').data
 # 1D integration
 ai = AzimuthalIntegrator('test.poni', mask.shape, 
-                          75.0e-6, 4, [2000,], 
+                          75.0e-6, 4, 2000, 
                           solid_angle=True) 
 res = ai.integrate(img)
 
@@ -33,9 +33,8 @@ plt.figure()
 plt.plot(ai.q, res)
 
 # 2D integration
-phi_bins = np.linspace(-np.pi, np.pi, 121)
 ai = AzimuthalIntegrator('test.poni', mask.shape, 
-                          75.0e-6, 4, [512, phi_bins], 
+                          75.0e-6, 4, 512, 180, 
                           solid_angle=True) 
 res = ai.integrate(img)
 plt.figure()

@@ -66,8 +66,9 @@ class AzimuthalIntegrator():
                  shape: tuple[int, int], 
                  pixel_size: float, 
                  n_splitting: int, 
-                 bins: list[Union[int, Sequence], Optional[Sequence]],
-                 unit: str = 'q',
+                 radial_bins: Union[int, Sequence],
+                 azimuthal_bins: Optional[Union[int, Sequence]] = None,
+                 unit: str = 'q_nm^-1',
                  mask: np.ndarray = None, 
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
@@ -79,8 +80,8 @@ class AzimuthalIntegrator():
             shape: Shape of the images to be integrated
             pixel_size: Pixel size of detector
             n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually
-            bins: list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.
-                Phi bins is a sequence
+            radial_bins: radial bins can either be number of bins or a sequence defining the bin edges.
+            azimuthal_bins: azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.
             unit: Ouput units for the radial coordindate
             mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
             solid_angle: Perform solid angle correction
@@ -89,7 +90,7 @@ class AzimuthalIntegrator():
                 -1 (linear vertical polarization)
             
         Attributes:
-            q (ndarray): q bins defined as q = 4pi/lambda sin(theta) in nm-1
+            q (ndarray): radial bins
             phi (ndarray, optional): phi bins is case of 2D integration
         """
         
@@ -99,8 +100,8 @@ class AzimuthalIntegrator():
         if error_model and n_splitting > 1:
             raise RuntimeError('Cannot estimate errors with pixel splitting.\n Set n_splitting to 1 for error estimation')
         
-        if unit not in ('q', '2th'):
-            raise RuntimeError('Wrong output unit. Allowed units: q, 2th')
+        if unit not in ('q_nm^-1', 'q_A^-1', '2th'):
+            raise RuntimeError('Wrong output unit. Allowed units: q_nm^-1, q_A^-1, 2th')
         
         self.error_model = error_model
         self.poni = Poni(poni_file)
@@ -112,20 +113,28 @@ class AzimuthalIntegrator():
         r = np.sqrt(pos[0]**2 + pos[1]**2)
         tth = np.arctan2(r, pos[2])
         
-        qbins = bins[0]
-        # calculate auto range min/max radial bins is number of bins
-        if not isinstance(qbins, Iterable):
-            # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
-            if unit == 'q':
+        # calculate auto range min/max radial bins
+        if not isinstance(radial_bins, Iterable):
+            if unit.startswith('q'):
+                # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
                 q = 4.0e-9 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
-                bins[0] = np.linspace(np.amin(q), np.amax(q), qbins+1)
+                radial_bins = np.linspace(np.amin(q), np.amax(q), radial_bins+1)
+                if unit == 'q_nm^-1':
+                    self.q = 0.5*(radial_bins[1:] + radial_bins[:-1])
+                elif unit == 'q_A^-1':
+                    self.q = 0.1*0.5*(radial_bins[1:] + radial_bins[:-1])
             elif unit == '2th':
-                bins[0] = np.linspace(np.amin(tth), np.amax(tth), qbins+1)
+                radial_bins = np.linspace(np.amin(tth), np.amax(tth), radial_bins+1)
+                self.q = np.rad2deg(0.5*(radial_bins[1:] + radial_bins[:-1]))
+        bins = [radial_bins]
+        
+        if azimuthal_bins is not None:
+            if not isinstance(azimuthal_bins, Iterable):
+                azimuthal_bins = np.linspace(0, 360, azimuthal_bins+1)
+            bins.append(azimuthal_bins)
             
-        # bin centers
-        self.q = 0.5*(bins[0][1:] + bins[0][:-1])
         if len(bins) == 2:
-            self.phi = 0.5*(bins[1][1:] + bins[1][:-1])
+            self.phi = 0.5*(azimuthal_bins[1:] + azimuthal_bins[:-1])
         else:
             self.phi = None
             
@@ -134,7 +143,7 @@ class AzimuthalIntegrator():
             
         self.input_size = np.prod(shape)
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
-        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins)
+        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins, unit)
         self.corrections = np.ones(shape[0]*shape[1], dtype=np.float32)
         if solid_angle:
             solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)
