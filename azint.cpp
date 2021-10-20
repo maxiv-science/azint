@@ -282,15 +282,6 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
     tocsr(segments, nrows, col_idx, row_ptr, values);
 }
 
-// Kahan summation to increase precision
-inline static void kadd(float& sum, float& c, float y) 
-{
-    y -= c;
-    float t = sum + y;
-    c = (t - sum) - y;
-    sum = t;
-}
-
 // sparse matrix vector multiplication
 template <typename T>
 void _spmv(long nrows, const std::vector<int>& col_idx, 
