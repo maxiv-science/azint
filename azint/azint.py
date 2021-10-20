@@ -3,6 +3,7 @@ import numpy as np
 from sparse import Sparse
 from typing import Optional, Union
 from collections.abc import Sequence
+from collections.abc import Iterable
 
 class Poni():
     def __init__(self, filename):
@@ -65,7 +66,8 @@ class AzimuthalIntegrator():
                  shape: tuple[int, int], 
                  pixel_size: float, 
                  n_splitting: int, 
-                 bins: list[Union[int, Sequence], Optional[Sequence]], 
+                 bins: list[Union[int, Sequence], Optional[Sequence]],
+                 unit: str = 'q',
                  mask: np.ndarray = None, 
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
@@ -79,6 +81,7 @@ class AzimuthalIntegrator():
             n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually
             bins: list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.
                 Phi bins is a sequence
+            unit: Ouput units for the radial coordindate
             mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
             solid_angle: Perform solid angle correction
             polarization_factor: Polarization factor for the polarization correction
@@ -96,6 +99,9 @@ class AzimuthalIntegrator():
         if error_model and n_splitting > 1:
             raise RuntimeError('Cannot estimate errors with pixel splitting.\n Set n_splitting to 1 for error estimation')
         
+        if unit not in ('q', '2th'):
+            raise RuntimeError('Wrong output unit. Allowed units: q, 2th')
+        
         self.error_model = error_model
         self.poni = Poni(poni_file)
         
@@ -107,11 +113,14 @@ class AzimuthalIntegrator():
         tth = np.arctan2(r, pos[2])
         
         qbins = bins[0]
-        # calculate auto range min/max q bins
-        if not any([isinstance(qbins, np.ndarray), isinstance(qbins, list)]):
+        # calculate auto range min/max radial bins is number of bins
+        if not isinstance(qbins, Iterable):
             # q = 4pi/lambda sin( 2theta / 2 ) in nm-1
-            q = 4.0e-9 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
-            bins[0] = np.linspace(np.amin(q), np.amax(q), qbins+1)
+            if unit == 'q':
+                q = 4.0e-9 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
+                bins[0] = np.linspace(np.amin(q), np.amax(q), qbins+1)
+            elif unit == '2th':
+                bins[0] = np.linspace(np.amin(tth), np.amax(tth), qbins+1)
             
         # bin centers
         self.q = 0.5*(bins[0][1:] + bins[0][:-1])

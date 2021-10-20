@@ -6,6 +6,12 @@
 #include <pybind11/numpy.h>
 namespace py = pybind11;
 
+enum class Unit
+{
+    q,
+    tth
+};
+
 struct Entry
 {
     Entry(int c, float v) : col(c), value(v) {}
@@ -121,8 +127,12 @@ void rotation_matrix(float rot[3][3], Poni poni)
     matrix_multiplication(rot, tmp, rot1);
 }
 
-void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::vector<RListMatrix>& segments,
-                      const Poni& poni, const int8_t* mask, int nradial_bins, const float* radial_bins)
+void generate_matrix(long shape[2], int n_splitting, float pixel_size, 
+                     std::vector<RListMatrix>& segments,
+                     const Poni& poni, const int8_t* mask, 
+                     int nradial_bins, const float* radial_bins,
+                     int nphi_bins, const float* phi_bins,
+                     const Unit& output_unit)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
@@ -147,69 +157,36 @@ void generate_matrix_1d(long shape[2], int n_splitting, float pixel_size, std::v
                     
                     float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
                     float tth = atan2f(r, pos[2]);
-                    // q = 4pi/lambda sin( 2theta / 2 ) in nm-1
-                    float q = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
-                    int radial_index = bisect_right(nradial_bins+1, radial_bins, q) - 1;
-                    if ((radial_index < 0) || (radial_index >= nradial_bins)) {
-                        continue;
-                    }
-                    
-                    int bin_index = radial_index;
-                    auto& row = segments[rank].rows[bin_index];
-                    // sum duplicate entries
-                    if (row.size() > 0 && (row.back().col == pixel_index)) {
-                        row.back().value += 1.0f / (n_splitting * n_splitting);
-                    }
-                    else {
-                        row.emplace_back(pixel_index, 1.0f / (n_splitting * n_splitting));
-                    }
-                }
-            }
-        }
-    }
-}
+                    float radial_coord = 0.0f;
+                    switch(output_unit) {
+                        case Unit::q:
+                            // 4pi/lambda sin( 2theta / 2 ) in nm-1;
+                            radial_coord = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
+                            break;
 
-void generate_matrix_2d(long shape[2], int n_splitting, float pixel_size, std::vector<RListMatrix>& segments,
-                      const Poni& poni, const int8_t* mask, 
-                      int nradial_bins, const float* radial_bins,
-                      int nphi_bins, const float* phi_bins)
-{
-    float rot[3][3];
-    rotation_matrix(rot, poni);
-    
-    #pragma omp parallel for schedule(static)
-    for (int i=0; i<shape[0]; i++) {
-        int rank = omp_get_thread_num();
-        for (int j=0; j<shape[1]; j++) {
-            int pixel_index = i*shape[1] + j;
-            if (mask[pixel_index]) {
-                continue;
-            }
-            for (int k=0; k<n_splitting; k++) {
-                for (int l=0; l<n_splitting; l++) {
-                    float p[] = {
-                        (i + (k + 0.5f) / n_splitting) * pixel_size - poni.poni1,
-                        (j + (l + 0.5f) / n_splitting) * pixel_size - poni.poni2,
-                        poni.dist
-                    };
-                    float pos[3];
-                    dot(pos, rot, p);
-                    
-                    float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
-                    float tth = atan2f(r, pos[2]);
-                    // q = 4pi/lambda sin( 2theta / 2 ) in nm-1
-                    float q = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
-                    int radial_index = bisect_right(nradial_bins+1, radial_bins, q) - 1;
+                        case Unit::tth:
+                            radial_coord = tth;
+                            break;
+                    }
+                    int radial_index = bisect_right(nradial_bins+1, radial_bins, radial_coord) - 1;
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
                     
-                    float phi = atan2f(pos[0], pos[1]);
-                    int phi_index = bisect_right(nphi_bins+1, phi_bins, phi) - 1;
-                    if ((phi_index < 0) || (phi_index >= nphi_bins)) {
-                        continue;
+                    int bin_index;
+                    // 2D integration
+                    if (phi_bins) {
+                        float phi = atan2f(pos[0], pos[1]);
+                        int phi_index = bisect_right(nphi_bins+1, phi_bins, phi) - 1;
+                        if ((phi_index < 0) || (phi_index >= nphi_bins)) {
+                            continue;
+                        }
+                        bin_index = phi_index * nradial_bins + radial_index;
                     }
-                    int bin_index = phi_index * nradial_bins + radial_index;
+                    // 1D integration
+                    else {
+                        bin_index = radial_index;
+                    }
                     
                     auto& row = segments[rank].rows[bin_index];
                     // sum duplicate entries
@@ -264,8 +241,10 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
     if (bins.size() == 1) {
         nrows = nradial_bins;
         segments.resize(max_threads, nrows);
-        generate_matrix_1d(shape, n_splitting, pixel_size, segments, 
-                           poni, mask.data(), nradial_bins, radial_bins.data());
+        generate_matrix(shape, n_splitting, pixel_size, 
+                        segments, poni, mask.data(), 
+                        nradial_bins, radial_bins.data(),
+                        0, nullptr, Unit::q);
     }
     
     // 2D integraion
@@ -274,9 +253,10 @@ Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
         int nphi_bins = phi_bins.size() - 1;
         nrows = nphi_bins * nradial_bins;
         segments.resize(max_threads, nrows);
-        generate_matrix_2d(shape, n_splitting, pixel_size, segments, poni, mask.data(), 
+        generate_matrix(shape, n_splitting, pixel_size, 
+                           segments, poni, mask.data(), 
                            nradial_bins, radial_bins.data(),
-                           nphi_bins, phi_bins.data());
+                           nphi_bins, phi_bins.data(), Unit::q);
     }
     
     tocsr(segments, nrows, col_idx, row_ptr, values);
