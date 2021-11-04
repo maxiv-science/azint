@@ -160,8 +160,8 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                     float radial_coord = 0.0f;
                     switch(output_unit) {
                         case Unit::q:
-                            // 4pi/lambda sin( 2theta / 2 ) in nm-1;
-                            radial_coord = 4.0e-9 * M_PI / poni.wavelength * sinf(0.5*tth);
+                            // 4pi/lambda sin( 2theta / 2 ) in A-1
+                            radial_coord = 4.0e-10 * M_PI / poni.wavelength * sinf(0.5*tth);
                             break;
 
                         case Unit::tth:
@@ -178,7 +178,7 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                     if (phi_bins) {
                         //float phi = atan2f(pos[0], pos[1]);
                         // convert atan2 from [-pi, pi] to [0, 360] degrees
-                        float phi = atan2f(-pos[1], -pos[0]) / M_PI*180.0f + 180.0f;
+                        float phi = atan2f(-pos[0], -pos[1]) / M_PI*180.0f + 180.0f;
                         int phi_index = bisect_right(nphi_bins+1, phi_bins, phi) - 1;
                         if ((phi_index < 0) || (phi_index >= nphi_bins)) {
                             continue;
