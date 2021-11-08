@@ -66,7 +66,7 @@ class AzimuthalIntegrator():
                  pixel_size: float, 
                  n_splitting: int, 
                  radial_bins: Union[int, Sequence],
-                 azimuthal_bins: Optional[Union[int, Sequence]] = None,
+                 azimuth_bins: Optional[Union[int, Sequence]] = None,
                  unit: str = 'q',
                  mask: np.ndarray = None, 
                  solid_angle: bool = True,
@@ -80,7 +80,7 @@ class AzimuthalIntegrator():
             pixel_size: Pixel size of detector
             n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually
             radial_bins: radial bins can either be number of bins or a sequence defining the bin edges in Angstrom^-1.
-            azimuthal_bins: azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.
+            azimuth_bins: azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.
             unit: Ouput units for the radial coordindate
             mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
             solid_angle: Perform solid angle correction
