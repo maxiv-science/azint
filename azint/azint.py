@@ -102,7 +102,9 @@ class AzimuthalIntegrator():
         if unit not in ('q', '2th'):
             raise RuntimeError('Wrong output unit. Allowed units: q, 2th')
         
+        self.unit = unit
         self.error_model = error_model
+        self.polarization_factor = polarization_factor
         self.poni = Poni(poni_file)
         
         p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
@@ -125,11 +127,11 @@ class AzimuthalIntegrator():
         bins = [radial_bins]
         
         self.azimuth_axis = None
-        if azimuthal_bins is not None:
-            if not isinstance(azimuthal_bins, Iterable):
-                azimuthal_bins = np.linspace(0, 360, azimuthal_bins+1)
-            self.azimuth_axis = 0.5*(azimuthal_bins[1:] + azimuthal_bins[:-1])
-            bins.append(azimuthal_bins)
+        if azimuth_bins is not None:
+            if not isinstance(azimuth_bins, Iterable):
+                azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
+            self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1])
+            bins.append(azimuth_bins)
             
         if mask is None:
             mask = np.zeros(shape, dtype=np.uint8)
