@@ -1,8 +1,7 @@
 import os
 import time
-import psutil
 import numpy as np
-from multiprocessing import Process
+from multiprocessing import Process, cpu_count
 from azint import AzimuthalIntegrator
 
 def worker(ai, nrep):
@@ -21,7 +20,7 @@ def benchmark():
                             solid_angle=True)
     end = time.perf_counter()
     print('Initialization time %.1fs' %(end - start))
-    nworkers = psutil.cpu_count(logical=False)
+    nworkers = cpu_count()
     nrep = 200
     procs = []
     for i in range(nworkers):

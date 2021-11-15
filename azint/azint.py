@@ -100,12 +100,17 @@ class AzimuthalIntegrator():
             raise RuntimeError('Cannot estimate errors with pixel splitting.\n Set n_splitting to 1 for error estimation')
         
         if unit not in ('q', '2th'):
-            raise RuntimeError('Wrong output unit. Allowed units: q, 2th')
+            raise RuntimeError('Wrong radial unit. Allowed units: q, 2th')
         
         self.unit = unit
         self.error_model = error_model
         self.polarization_factor = polarization_factor
         self.poni = Poni(poni_file)
+        
+        if mask is None:
+            mask = np.zeros(shape, dtype=np.uint8)
+        elif mask.shape != shape:
+            raise RuntimeError('Img shape %s is different from mask shape %s' %(shape, mask.shape))
         
         p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
         p3 = np.ones(np.prod(shape), dtype=np.float32)*self.poni.dist
@@ -132,9 +137,6 @@ class AzimuthalIntegrator():
                 azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
             self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1])
             bins.append(azimuth_bins)
-            
-        if mask is None:
-            mask = np.zeros(shape, dtype=np.uint8)
             
         self.input_size = np.prod(shape)
         self.output_shape = [len(axis)-1 for axis in bins[::-1]]
