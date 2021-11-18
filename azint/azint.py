@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from sparse import Sparse
+from _azint import Sparse
 from typing import Optional, Union
 from collections.abc import Sequence, Iterable
 

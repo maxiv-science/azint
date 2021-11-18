@@ -9,7 +9,7 @@ else:
 
 ext_modules = [
     Pybind11Extension(
-        'sparse',
+        '_azint',
         ['azint.cpp'],
         extra_compile_args=[openmp_flag],
         extra_link_args=[openmp_flag]
@@ -18,7 +18,7 @@ ext_modules = [
 
 setup(
     name = 'azint',
-    version = '0.8.1',
+    version = '0.8.2',
     description = 'Azimthual Integration',
     ext_modules = ext_modules,
     packages=find_packages(),

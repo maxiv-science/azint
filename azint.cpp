@@ -318,7 +318,7 @@ py::array_t<float> Sparse::spmv(py::array x)
     return b;
 }
 
-PYBIND11_MODULE(sparse, m) {
+PYBIND11_MODULE(_azint, m) {
     py::class_<Sparse>(m, "Sparse")
         .def(py::init<py::object, py::tuple, float, int, py::array_t<int8_t>, py::sequence, std::string>())
         .def("spmv", &Sparse::spmv);
