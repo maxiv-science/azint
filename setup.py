@@ -22,4 +22,5 @@ setup(
     description = 'Azimthual Integration',
     ext_modules = ext_modules,
     packages=find_packages(),
+    package_data={'azint': ['benchmark/bench.poni']},
 ) 
