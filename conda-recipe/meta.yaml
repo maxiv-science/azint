@@ -8,8 +8,8 @@ source:
   path: ..
 
 build:
-  number: 1
-  script: python setup.py install --single-version-externally-managed --record record.txt
+  number: 2
+  script: pip install .
 requirements:
   build:
     - {{ compiler('cxx') }}
