@@ -1,2 +1,5 @@
 numpy:
   - 1.19
+ python:
+  - 3.9.* *_cpython
+  - 3.10.* *_cpython
