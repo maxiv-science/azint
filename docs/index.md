@@ -30,7 +30,7 @@ res = ai.integrate(img)
 
 import matplotlib.pyplot as plt
 plt.figure()
-plt.plot(ai.q, res)
+plt.plot(ai.radial_axis, res)
 
 # 2D integration
 ai = AzimuthalIntegrator('test.poni', mask.shape, 
