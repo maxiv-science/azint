@@ -23,21 +23,30 @@ from azint import AzimuthalIntegrator
 img = fabio.open('Eiger4M_Al2O3_13.45keV.edf').data
 mask = fabio.open('mask.tif').data
 # 1D integration
-ai = AzimuthalIntegrator('test.poni', mask.shape, 
-                          75.0e-6, 4, 2000, 
-                          solid_angle=True) 
-res = ai.integrate(img)
+ai = AzimuthalIntegrator('test.poni', 
+                          mask.shape, 
+                          75.0e-6, 4, 
+                          2000,
+                          unit='q',
+                          solid_angle=True,
+                          mask=mask) 
+I, sigma = ai.integrate(img)
 
 import matplotlib.pyplot as plt
 plt.figure()
-plt.plot(ai.radial_axis, res)
+plt.plot(ai.radial_axis, I)
 
 # 2D integration
-ai = AzimuthalIntegrator('test.poni', mask.shape, 
-                          75.0e-6, 4, 512, 180, 
-                          solid_angle=True) 
-res = ai.integrate(img)
+ai = AzimuthalIntegrator('test.poni', 
+                          mask.shape, 
+                          75.0e-6, 4, 
+                          512, 
+                          180, 
+                          unit='q',
+                          solid_angle=True,
+                          mask=mask) 
+I, sigma = ai.integrate(img)
 plt.figure()
-plt.imshow(res)
+plt.imshow(I)
 
 ```
