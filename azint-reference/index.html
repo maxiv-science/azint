@@ -8,11 +8,10 @@
       
       
       
-      
         <link rel="canonical" href="https://example.com/azint-reference/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.8">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.6">
     
     
       
@@ -20,10 +19,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ca7ac06f.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.cd566b2a.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.f1a3b89f.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
         
       
     
@@ -33,16 +32,15 @@
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
-    
     
     
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
+    <script>__md_scope=new URL("..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
-
 
     
     
@@ -57,7 +55,6 @@
     <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
   
     
-    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
@@ -74,7 +71,10 @@
       
     </div>
     
-      <header class="md-header" data-md-component="header">
+    
+      
+
+<header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="azint" class="md-header__button md-logo" aria-label="azint" data-md-component="logo">
       
@@ -107,19 +107,22 @@
       <label class="md-header__button md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
       </label>
-      
-<div class="md-search" data-md-component="search" role="dialog">
+      <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
       </label>
-      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-      </button>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" data-md-scrollfix>
@@ -136,11 +139,14 @@
     
     
   </nav>
+  
 </header>
     
     <div class="md-container" data-md-component="container">
       
       
+        
+          
         
       
       <main class="md-main" data-md-component="main">
@@ -197,10 +203,14 @@
       
         <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
       
-      <label class="md-nav__link" for="__nav_2">
-        Code Reference
-        <span class="md-nav__icon md-icon"></span>
-      </label>
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Code Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <nav class="md-nav" aria-label="Code Reference" data-md-level="1">
         <label class="md-nav__title" for="__nav_2">
           <span class="md-nav__icon md-icon"></span>
@@ -209,6 +219,7 @@
         <ul class="md-nav__list" data-md-scrollfix>
           
             
+              
   
   
     
@@ -230,6 +241,7 @@
       </a>
       
         
+
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
@@ -282,6 +294,7 @@
     </li>
   
 
+            
           
         </ul>
       </nav>
@@ -301,6 +314,7 @@
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
+
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
@@ -358,10 +372,10 @@
             <article class="md-content__inner md-typeset">
               
                 
-                
-                  <h1>azint</h1>
-                
-                <div class="doc doc-object doc-module">
+
+  <h1>azint</h1>
+
+<div class="doc doc-object doc-module">
 
 <a id="azint.azint"></a>
     <div class="doc doc-contents first">
@@ -382,7 +396,8 @@
 
 
 <h2 id="azint.azint.AzimuthalIntegrator" class="doc doc-heading">
-        <code>AzimuthalIntegrator</code>
+        <code>
+AzimuthalIntegrator        </code>
 
 
 
@@ -410,7 +425,7 @@
 
 
 <h3 id="azint.azint.AzimuthalIntegrator.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poni_file</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">n_splitting</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solid_angle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poni_file</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">n_splitting</span><span class="p">,</span> <span class="n">radial_bins</span><span class="p">,</span> <span class="n">azimuth_bins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">solid_angle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">polarization_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">error_model</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -458,11 +473,22 @@ of the integrator</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
-        <td><code>bins</code></td>
-        <td><code>list</code></td>
-        <td><p>list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.
-Phi bins is a sequence</p></td>
+        <td><code>radial_bins</code></td>
+        <td><code>Union[int, collections.abc.Sequence]</code></td>
+        <td><p>radial bins can either be number of bins or a sequence defining the bin edges in Angstrom^-1.</p></td>
         <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>azimuth_bins</code></td>
+        <td><code>Union[int, collections.abc.Sequence]</code></td>
+        <td><p>azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>unit</code></td>
+        <td><code>str</code></td>
+        <td><p>Ouput units for the radial coordindate</p></td>
+        <td><code>&#39;q&#39;</code></td>
       </tr>
       <tr>
         <td><code>mask</code></td>
@@ -475,6 +501,14 @@ Phi bins is a sequence</p></td>
         <td><code>bool</code></td>
         <td><p>Perform solid angle correction</p></td>
         <td><code>True</code></td>
+      </tr>
+      <tr>
+        <td><code>polarization_factor</code></td>
+        <td><code>Optional[float]</code></td>
+        <td><p>Polarization factor for the polarization correction
+1 (linear horizontal polarization)
+-1 (linear vertical polarization)</p></td>
+        <td><code>None</code></td>
       </tr>
   </tbody>
 </table>
@@ -489,14 +523,14 @@ Phi bins is a sequence</p></td>
   </thead>
   <tbody>
       <tr>
-        <td><code>q</code></td>
+        <td><code>radial_axis</code></td>
         <td><code>ndarray</code></td>
-        <td><p>q bins defined as q = 4pi/lambda sin(theta) in nm-1</p></td>
+        <td><p>radial axis depeding on units in q or 2theta</p></td>
       </tr>
       <tr>
-        <td><code>phi</code></td>
+        <td><code>azimuth_axis</code></td>
         <td><code>ndarray</code></td>
-        <td><p>phi bins is case of 2D integration</p></td>
+        <td><p>azimuth axis in degrees is case of 2D integration</p></td>
       </tr>
   </tbody>
 </table>
@@ -507,9 +541,13 @@ Phi bins is a sequence</p></td>
              <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> 
              <span class="n">pixel_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> 
              <span class="n">n_splitting</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
-             <span class="n">bins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">]],</span> 
+             <span class="n">radial_bins</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">],</span>
+             <span class="n">azimuth_bins</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;q&#39;</span><span class="p">,</span>
              <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
-             <span class="n">solid_angle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+             <span class="n">solid_angle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+             <span class="n">polarization_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">error_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Args:</span>
 <span class="sd">        poni_file: Name of Poni file that sets up the geometry</span>
@@ -517,43 +555,80 @@ Phi bins is a sequence</p></td>
 <span class="sd">        shape: Shape of the images to be integrated</span>
 <span class="sd">        pixel_size: Pixel size of detector</span>
 <span class="sd">        n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually</span>
-<span class="sd">        bins: list of q and optionally phi bins. q bins can either be number of bins or a sequence defining the bin edges.</span>
-<span class="sd">            Phi bins is a sequence</span>
+<span class="sd">        radial_bins: radial bins can either be number of bins or a sequence defining the bin edges in Angstrom^-1.</span>
+<span class="sd">        azimuth_bins: azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.</span>
+<span class="sd">        unit: Ouput units for the radial coordindate</span>
 <span class="sd">        mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded</span>
 <span class="sd">        solid_angle: Perform solid angle correction</span>
+<span class="sd">        polarization_factor: Polarization factor for the polarization correction</span>
+<span class="sd">            1 (linear horizontal polarization)</span>
+<span class="sd">            -1 (linear vertical polarization)</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        q (ndarray): q bins defined as q = 4pi/lambda sin(theta) in nm-1</span>
-<span class="sd">        phi (ndarray, optional): phi bins is case of 2D integration</span>
+<span class="sd">        radial_axis (ndarray): radial axis depeding on units in q or 2theta</span>
+<span class="sd">        azimuth_axis (ndarray, optional): azimuth axis in degrees is case of 2D integration</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">poni</span> <span class="o">=</span> <span class="n">Poni</span><span class="p">(</span><span class="n">poni_file</span><span class="p">)</span>
-    <span class="n">qbins</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">qbins</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qbins</span><span class="p">,</span> <span class="nb">list</span><span class="p">)]):</span>
-        <span class="n">minq</span> <span class="o">=</span> <span class="n">calculate_minq</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">)</span>
-        <span class="n">maxq</span> <span class="o">=</span> <span class="n">calculate_maxq</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">)</span>
-        <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">minq</span><span class="p">,</span> <span class="n">maxq</span><span class="p">,</span> <span class="n">qbins</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">bins</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">error_model</span> <span class="ow">and</span> <span class="n">error_model</span> <span class="o">!=</span> <span class="s1">&#39;poisson&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Only poisson error model is supported&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">error_model</span> <span class="ow">and</span> <span class="n">n_splitting</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cannot estimate errors with pixel splitting.</span><span class="se">\n</span><span class="s1"> Set n_splitting to 1 for error estimation&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">unit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="s1">&#39;2th&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Wrong radial unit. Allowed units: q, 2th&#39;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">error_model</span> <span class="o">=</span> <span class="n">error_model</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">polarization_factor</span> <span class="o">=</span> <span class="n">polarization_factor</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">poni</span> <span class="o">=</span> <span class="n">Poni</span><span class="p">(</span><span class="n">poni_file</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Img shape </span><span class="si">%s</span><span class="s1"> is different from mask shape </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
+    <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">calc_coordinates</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="p">)</span>
+    <span class="n">p3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="o">.</span><span class="n">dist</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">rotation_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="p">),</span> 
+                     <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">p1</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">p2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">p3</span><span class="p">)))</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">tth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pos</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># calculate auto range min/max radial bins</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">radial_bins</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;q&#39;</span><span class="p">:</span>
+            <span class="c1"># q = 4pi/lambda sin( 2theta / 2 ) in A-1</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="mf">4.0e-10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="o">.</span><span class="n">wavelength</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">tth</span><span class="p">)</span>
+            <span class="n">radial_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">radial_bins</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radial_axis</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">radial_bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">radial_bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;2th&#39;</span><span class="p">:</span>
+            <span class="n">radial_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">tth</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">tth</span><span class="p">),</span> <span class="n">radial_bins</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radial_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">radial_bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">radial_bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">bins</span> <span class="o">=</span> <span class="p">[</span><span class="n">radial_bins</span><span class="p">]</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">azimuth_axis</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">azimuth_bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">azimuth_bins</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="n">azimuth_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">360</span><span class="p">,</span> <span class="n">azimuth_bins</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">azimuth_axis</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">azimuth_bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">azimuth_bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">bins</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">azimuth_bins</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">input_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">bins</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span> <span class="o">=</span> <span class="n">Sparse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">n_splitting</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">bins</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span> <span class="o">=</span> <span class="n">Sparse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">n_splitting</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">solid_angle</span><span class="p">:</span>
-        <span class="n">d1</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="o">.</span><span class="n">poni1</span>
-        <span class="n">d2</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="o">.</span><span class="n">poni2</span>
-        <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="n">d1</span><span class="p">)</span>
         <span class="n">solid_angle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="o">.</span><span class="n">dist</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poni</span><span class="o">.</span><span class="n">dist</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">p1</span><span class="o">*</span><span class="n">p1</span> <span class="o">+</span> <span class="n">p2</span><span class="o">*</span><span class="n">p2</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="n">solid_angle</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">correction</span> <span class="o">=</span> <span class="n">solid_angle</span><span class="o">**</span><span class="mi">3</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">correction</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span> <span class="o">*=</span> <span class="p">(</span><span class="n">solid_angle</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">polarization_factor</span><span class="p">:</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cos2_tth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">tth</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">polarization</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">cos2_tth</span> <span class="o">-</span> <span class="n">polarization_factor</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">cos2_tth</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span> <span class="o">*=</span> <span class="n">polarization</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">corrections</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -595,7 +670,7 @@ Phi bins is a sequence</p></td>
       </tr>
       <tr>
         <td><code>mask</code></td>
-        <td><code>ndarray</code></td>
+        <td><code>Optional[numpy.ndarray]</code></td>
         <td><p>Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
 the constructor is more efficient</p></td>
         <td><code>None</code></td>
@@ -612,8 +687,8 @@ the constructor is more efficient</p></td>
   </thead>
   <tbody>
     <tr>
-      <td><code>ndarray</code></td>
-      <td><p>azimuthal integrated image</p></td>
+      <td><code>tuple</code></td>
+      <td><p>azimuthal integrated image and optionally error estimate sigma when error_model is specified</p></td>
     </tr>
   </tbody>
 </table>
@@ -621,7 +696,7 @@ the constructor is more efficient</p></td>
           <summary>Source code in <code>azint/azint.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">integrate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
               <span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> 
-              <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+              <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculate the azimuthal integrated profile</span>
 <span class="sd">    Args:</span>
@@ -629,21 +704,29 @@ the constructor is more efficient</p></td>
 <span class="sd">        mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in</span>
 <span class="sd">            the constructor is more efficient</span>
 <span class="sd">    Returns:</span>
-<span class="sd">        azimuthal integrated image</span>
+<span class="sd">        azimuthal integrated image and optionally error estimate sigma when error_model is specified</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_size</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Size of image is wrong!</span><span class="se">\n</span><span class="s1">Expected </span><span class="si">%d</span><span class="se">\n</span><span class="s1">Actual size </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_size</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">inverted_mask</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">mask</span>
         <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="o">*</span><span class="n">inverted_mask</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">correction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="n">inverted_mask</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">correction</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="n">inverted_mask</span><span class="p">)</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="n">inverted_mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">corrections</span><span class="p">)</span>
 
     <span class="n">signal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">spmv</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">signal</span><span class="p">),</span> <span class="n">where</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="o">!=</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">signal</span><span class="p">),</span> <span class="n">where</span><span class="o">=</span><span class="n">norm</span><span class="o">!=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_model</span><span class="p">:</span>
+        <span class="c1"># poisson error model</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">sigma</span><span class="p">),</span> <span class="n">where</span><span class="o">=</span><span class="n">norm</span><span class="o">!=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">sigma</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="kc">None</span>
 </code></pre></div>
         </details>
     </div>
@@ -669,17 +752,11 @@ the constructor is more efficient</p></td>
 
 
 
-
   </div>
 
     </div>
 
   </div>
-                
-              
-              
-                
-
 
               
             </article>
@@ -688,8 +765,7 @@ the constructor is more efficient</p></td>
         
       </main>
       
-        
-<footer class="md-footer">
+        <footer class="md-footer">
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
@@ -713,14 +789,15 @@ the constructor is more efficient</p></td>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
-      <div class="md-footer-copyright">
-        
-        Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-          Material for MkDocs
-        </a>
-        
-      </div>
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
       
     </div>
   </div>
@@ -730,10 +807,10 @@ the constructor is more efficient</p></td>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.b0710199.min.js", "version": null}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
-      <script src="../assets/javascripts/bundle.76f349be.min.js"></script>
+      <script src="../assets/javascripts/bundle.1514a9a0.min.js"></script>
       
     
   </body>
