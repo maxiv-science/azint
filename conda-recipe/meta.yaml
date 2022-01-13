@@ -32,4 +32,8 @@ test:
   commands:
     - pytest tests/
 
+about:
+  license: MIT
+  license_file: ../LICENSE
+
  
