@@ -207,7 +207,7 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
 class Sparse
 {
 public:
-    Sparse(py::object py_poni, py::tuple py_shape, float pixel_size,
+    Sparse(py::object py_poni, py::sequence py_shape, float pixel_size,
            int n_splitting, py::array_t<int8_t> mask,
             py::sequence bins, const std::string& unit);
     py::array_t<float> spmv(py::array x);
@@ -217,7 +217,7 @@ private:
     std::vector<float> values;
 };
 
-Sparse::Sparse(py::object py_poni, py::tuple py_shape, float pixel_size, 
+Sparse::Sparse(py::object py_poni, py::sequence py_shape, float pixel_size, 
                int n_splitting, py::array_t<int8_t> mask,
                py::sequence bins, const std::string& unit)
 {
@@ -320,6 +320,6 @@ py::array_t<float> Sparse::spmv(py::array x)
 
 PYBIND11_MODULE(_azint, m) {
     py::class_<Sparse>(m, "Sparse")
-        .def(py::init<py::object, py::tuple, float, int, py::array_t<int8_t>, py::sequence, std::string>())
+        .def(py::init<py::object, py::sequence, float, int, py::array_t<int8_t>, py::sequence, std::string>())
         .def("spmv", &Sparse::spmv);
 }
