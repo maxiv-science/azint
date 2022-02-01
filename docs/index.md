@@ -30,7 +30,7 @@ ai = AzimuthalIntegrator('test.poni',
                           unit='q',
                           solid_angle=True,
                           mask=mask) 
-I, sigma = ai.integrate(img)
+I, error = ai.integrate(img)
 
 import matplotlib.pyplot as plt
 plt.figure()
@@ -45,7 +45,7 @@ ai = AzimuthalIntegrator('test.poni',
                           unit='q',
                           solid_angle=True,
                           mask=mask) 
-I, sigma = ai.integrate(img)
+I, error = ai.integrate(img)
 plt.figure()
 plt.imshow(I)
 

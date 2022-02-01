@@ -164,7 +164,7 @@ class AzimuthalIntegrator():
             mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
                 the constructor is more efficient
         Returns:
-            azimuthal integrated image and optionally error estimate sigma when error_model is specified
+            azimuthal integrated image and optionally standard error of the mean (SEM) when error_model is specified
         """
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
