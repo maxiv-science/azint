@@ -132,7 +132,7 @@ class AzimuthalIntegrator():
             if not isinstance(radial_bins, Iterable):
                 radial_bins = np.linspace(np.amin(tth), np.amax(tth), radial_bins+1)
                 self.radial_axis = np.rad2deg(0.5*(radial_bins[1:] + radial_bins[:-1]))
-            # custom phi range in degrees
+            # custom q range in degrees
             else:
                 self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
                 radial_bins = np.deg2rad(radial_bins)
