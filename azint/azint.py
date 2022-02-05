@@ -119,16 +119,24 @@ class AzimuthalIntegrator():
         r = np.sqrt(pos[0]**2 + pos[1]**2)
         tth = np.arctan2(r, pos[2])
         
-        # calculate auto range min/max radial bins
-        if not isinstance(radial_bins, Iterable):
-            if unit == 'q':
+        if unit == 'q':
+            # calculate auto range min/max radial bins
+            if not isinstance(radial_bins, Iterable):
                 # q = 4pi/lambda sin( 2theta / 2 ) in A-1
                 q = 4.0e-10 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
                 radial_bins = np.linspace(np.amin(q), np.amax(q), radial_bins+1)
-                self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
-            elif unit == '2th':
+                
+            self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
+            
+        elif unit == '2th':
+            if not isinstance(radial_bins, Iterable):
                 radial_bins = np.linspace(np.amin(tth), np.amax(tth), radial_bins+1)
                 self.radial_axis = np.rad2deg(0.5*(radial_bins[1:] + radial_bins[:-1]))
+            # custom phi range in degrees
+            else:
+                self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
+                radial_bins = np.deg2rad(radial_bins)
+                
         bins = [radial_bins]
         
         self.azimuth_axis = None
