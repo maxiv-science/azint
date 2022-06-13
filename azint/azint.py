@@ -164,7 +164,8 @@ class AzimuthalIntegrator():
             
     def integrate(self, 
                   img: np.ndarray, 
-                  mask: Optional[np.ndarray] = None) -> tuple[np.ndarray, Optional[np.ndarray]]:
+                  mask: Optional[np.ndarray] = None,
+                  normalized: bool = True) -> tuple[np.ndarray, Optional[np.ndarray]]:
         """
         Calculate the azimuthal integrated profile
         Args:
@@ -183,15 +184,19 @@ class AzimuthalIntegrator():
             img = img*inverted_mask
             norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1)*self.corrections)
                 
-        signal = self.sparse_matrix.spmv(img)
-        result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-        result = result.reshape(self.output_shape)
+        signal = self.sparse_matrix.spmv(img).reshape(self.output_shape)
+        norm = norm.reshape(self.output_shape)
         
+        errors = None
         if self.error_model:
             # poisson error model
-            sigma = np.sqrt(signal)
-            sigma = np.divide(sigma, norm, out=np.zeros_like(sigma), where=norm!=0.0)
-            sigma = sigma.reshape(self.output_shape)
-            return result, sigma
+            errors = np.sqrt(signal)
+            errors = errors.reshape(self.output_shape)
+        
+        if normalized:
+            result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
+            if errors:
+                errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
+            return result, errors
         else:
-            return result, None
+            return signal, errors, norm
