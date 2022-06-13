@@ -20,8 +20,9 @@ def test2d():
     assert(np.allclose(projection, 1.0))
     
 def test_custom_ranges():
-    q = np.array([0.0, 0.1, 0.2, 0.3, 0.4])
+    q = [0.0, 0.1, 0.2, 0.3, 0.4]
     phi = np.linspace(0.0, 360.0, 180)
     ai = AzimuthalIntegrator(poni_file, img.shape, pixel_size, 4, q, phi, solid_angle=False)
+    q = np.array(q)
     assert(np.allclose(0.5*(q[1:] + q[:-1]), ai.radial_axis))
     assert(np.allclose(0.5*(phi[1:] + phi[:-1]), ai.azimuth_axis))

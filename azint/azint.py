@@ -125,6 +125,8 @@ class AzimuthalIntegrator():
                 # q = 4pi/lambda sin( 2theta / 2 ) in A-1
                 q = 4.0e-10 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
                 radial_bins = np.linspace(np.amin(q), np.amax(q), radial_bins+1)
+            else:
+                radial_bins = np.asarray(radial_bins)
                 
             self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
             
