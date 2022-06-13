@@ -4,6 +4,7 @@
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 namespace py = pybind11;
 
 enum class Unit
@@ -209,13 +210,21 @@ class Sparse
 public:
     Sparse(py::object py_poni, py::sequence py_shape, float pixel_size,
            int n_splitting, py::array_t<int8_t> mask,
-            py::sequence bins, const std::string& unit);
+           py::sequence bins, const std::string& unit);
+    Sparse(std::vector<int>&& c,
+           std::vector<int>&& r,
+           std::vector<float>&& v);
     py::array_t<float> spmv(py::array x);
-private:
     std::vector<int> col_idx;
     std::vector<int> row_ptr;
     std::vector<float> values;
 };
+
+Sparse::Sparse(std::vector<int>&& c,
+               std::vector<int>&& r,
+               std::vector<float>&& v) : col_idx(c), row_ptr(r), values(v)
+{
+}
 
 Sparse::Sparse(py::object py_poni, py::sequence py_shape, float pixel_size, 
                int n_splitting, py::array_t<int8_t> mask,
@@ -321,5 +330,16 @@ py::array_t<float> Sparse::spmv(py::array x)
 PYBIND11_MODULE(_azint, m) {
     py::class_<Sparse>(m, "Sparse")
         .def(py::init<py::object, py::sequence, float, int, py::array_t<int8_t>, py::sequence, std::string>())
-        .def("spmv", &Sparse::spmv);
+        .def("spmv", &Sparse::spmv)
+        .def(py::pickle(
+            [](const Sparse &s) {
+                return py::make_tuple(s.col_idx, s.row_ptr, s.values);
+            },
+            [](py::tuple t) {
+                Sparse s(std::move(t[0].cast<std::vector<int> >()),
+                         std::move(t[1].cast<std::vector<int> >()),
+                         std::move(t[2].cast<std::vector<float> >()));
+                return s;
+            }
+        ));
 }
