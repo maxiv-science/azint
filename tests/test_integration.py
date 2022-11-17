@@ -13,6 +13,10 @@ def test1d():
     res, _ = ai.integrate(img)
     assert(np.allclose(res, 1.0))
     
+    ai = AzimuthalIntegrator(poni_file, img.shape, pixel_size, 1, 1000, error_model='poisson', solid_angle=False) 
+    res, _ = ai.integrate(img)
+    assert(np.allclose(res, 1.0))
+    
 def test2d():
     ai = AzimuthalIntegrator(poni_file, img.shape, pixel_size, 4, 1000, 360, solid_angle=False) 
     res, _, norm = ai.integrate(img, normalized=False)
@@ -26,3 +30,4 @@ def test_custom_ranges():
     q = np.array(q)
     assert(np.allclose(0.5*(q[1:] + q[:-1]), ai.radial_axis))
     assert(np.allclose(0.5*(phi[1:] + phi[:-1]), ai.azimuth_axis))
+    

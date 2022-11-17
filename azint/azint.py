@@ -197,7 +197,7 @@ class AzimuthalIntegrator():
         
         if normalized:
             result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-            if errors:
+            if errors is not None:
                 errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
             return result, errors
         else:
