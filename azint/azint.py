@@ -167,15 +167,18 @@ class AzimuthalIntegrator():
     def integrate(self, 
                   img: np.ndarray, 
                   mask: Optional[np.ndarray] = None,
-                  normalized: bool = True) -> tuple[np.ndarray, Optional[np.ndarray]]:
+                  normalized: bool = True) -> tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
-        Calculate the azimuthal integrated profile
+        Calculate the azimuthal integration of the input image
         Args:
             img: Input image to be integrated
             mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
                 the constructor is more efficient
+            normalized: Whether to return the normalized result or the integrated signal and norm separately
         Returns:
-            azimuthal integrated image and optionally standard error of the mean (SEM) when error_model is specified
+            azimuthal integrated image or just integrated signal if normalized is True
+            standard error of the mean (SEM) when error_model is specified else None
+            the norm if normalized is False
         """
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
