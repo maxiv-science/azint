@@ -1,4 +1,5 @@
 #define _USE_MATH_DEFINES
+#include <cmath>
 #include <omp.h>
 #include <vector>
 #include <iostream>
