@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
@@ -38,22 +39,6 @@ struct Poni
     float rot3;
     float wavelength;
 };
-
-int bisect_right(int n, const float* bins, float x)
-{
-    int lo = 0;
-    int hi = n;
-    while (lo < hi) {
-        int mid = (lo + hi) / 2;
-        if (x < bins[mid]) {
-            hi = mid;
-        }
-        else {
-            lo = mid + 1;
-        }
-    }
-    return lo;
-}
 
 void tocsr(std::vector<RListMatrix>& segments, int nrows,
       std::vector<int>& col_idx, std::vector<int>& row_ptr, std::vector<float>& values)
@@ -170,7 +155,10 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                             radial_coord = tth;
                             break;
                     }
-                    int radial_index = bisect_right(nradial_bins+1, radial_bins, radial_coord) - 1;
+                    auto lower = std::lower_bound(radial_bins, 
+                                                  radial_bins+nradial_bins+1, 
+                                                  radial_coord);
+                    int radial_index = std::distance(radial_bins, lower) - 1;
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
@@ -181,7 +169,11 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                         //float phi = atan2f(pos[0], pos[1]);
                         // convert atan2 from [-pi, pi] to [0, 360] degrees
                         float phi = atan2f(-pos[0], -pos[1]) / M_PI*180.0f + 180.0f;
-                        int phi_index = bisect_right(nphi_bins+1, phi_bins, phi) - 1;
+                        
+                        auto lower = std::lower_bound(phi_bins, 
+                                                      phi_bins+nphi_bins+1, 
+                                                      phi);
+                        int phi_index = std::distance(phi_bins, lower) - 1;
                         if ((phi_index < 0) || (phi_index >= nphi_bins)) {
                             continue;
                         }
