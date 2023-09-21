@@ -4,41 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-namespace py = pybind11;
-
-enum class Unit
-{
-    q,
-    tth
-};
-
-struct Entry
-{
-    Entry(int c, float v) : col(c), value(v) {}
-    int col;
-    float value;
-};
-
-struct RListMatrix
-{
-    RListMatrix(int nrows) : rows(nrows), nelements(0) {}
-    std::vector<std::vector<Entry> > rows;
-    size_t nelements;
-};
-
-struct Poni
-{
-    float dist;
-    float poni1;
-    float poni2;
-    float rot1;
-    float rot2;
-    float rot3;
-    float wavelength;
-};
+#include "azint.hpp"
 
 void tocsr(std::vector<RListMatrix>& segments, int nrows,
       std::vector<int>& col_idx, std::vector<int>& row_ptr, std::vector<float>& values)
@@ -116,10 +82,10 @@ void rotation_matrix(float rot[3][3], Poni poni)
 
 void generate_matrix(long shape[2], int n_splitting, float pixel_size, 
                      std::vector<RListMatrix>& segments,
-                     const Poni& poni, const int8_t* mask, 
+                     const Poni& poni, const int8_t* mask,
+                     const Unit& output_unit,
                      int nradial_bins, const float* radial_bins,
-                     int nphi_bins, const float* phi_bins,
-                     const Unit& output_unit)
+                     int nphi_bins, float* phi_bins)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
@@ -144,10 +110,11 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                     
                     float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
                     float tth = atan2f(r, pos[2]);
-                    float radial_coord = 0.0f;
+                    
+                    float radial_coord = 0.0f; 
                     switch(output_unit) {
                         case Unit::q:
-                            // 4pi/lambda sin( 2theta / 2 ) in A-1
+                            // 4pi / lambda sin(2theta / 2) in A-1
                             radial_coord = 4.0e-10 * M_PI / poni.wavelength * sinf(0.5*tth);
                             break;
 
@@ -155,6 +122,7 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                             radial_coord = tth;
                             break;
                     }
+
                     auto lower = std::lower_bound(radial_bins, 
                                                   radial_bins+nradial_bins+1, 
                                                   radial_coord);
@@ -162,11 +130,10 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                     if ((radial_index < 0) || (radial_index >= nradial_bins)) {
                         continue;
                     }
+                    int bin_index = radial_index;
                     
-                    int bin_index;
                     // 2D integration
                     if (phi_bins) {
-                        //float phi = atan2f(pos[0], pos[1]);
                         // convert atan2 from [-pi, pi] to [0, 360] degrees
                         float phi = atan2f(-pos[0], -pos[1]) / M_PI*180.0f + 180.0f;
                         
@@ -177,11 +144,7 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                         if ((phi_index < 0) || (phi_index >= nphi_bins)) {
                             continue;
                         }
-                        bin_index = phi_index * nradial_bins + radial_index;
-                    }
-                    // 1D integration
-                    else {
-                        bin_index = radial_index;
+                        bin_index += phi_index * nradial_bins;
                     }
                     
                     auto& row = segments[rank].rows[bin_index];
@@ -198,30 +161,14 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
     }
 }
 
-class Sparse
-{
-public:
-    Sparse(py::object py_poni, py::sequence py_shape, float pixel_size,
-           int n_splitting, py::array_t<int8_t> mask,
-           py::sequence bins, const std::string& unit);
-    Sparse(std::vector<int>&& c,
-           std::vector<int>&& r,
-           std::vector<float>&& v);
-    py::array_t<float> spmv(py::array x);
-    std::vector<int> col_idx;
-    std::vector<int> row_ptr;
-    std::vector<float> values;
-};
-
-Sparse::Sparse(std::vector<int>&& c,
-               std::vector<int>&& r,
-               std::vector<float>&& v) : col_idx(c), row_ptr(r), values(v)
-{
-}
-
-Sparse::Sparse(py::object py_poni, py::sequence py_shape, float pixel_size, 
-               int n_splitting, py::array_t<int8_t> mask,
-               py::sequence bins, const std::string& unit)
+Sparse::Sparse(py::object py_poni, 
+               py::sequence py_shape, 
+               float pixel_size,
+               int n_splitting, 
+               py::array_t<int8_t> mask,
+               const std::string& unit,
+               py::array_t<float, py::array::c_style | py::array::forcecast> radial_bins,
+               std::optional<py::array_t<float, py::array::c_style | py::array::forcecast> > phi_bins)
 {
     Poni poni;
     poni.dist = py_poni.attr("dist").cast<float>();
@@ -232,47 +179,76 @@ Sparse::Sparse(py::object py_poni, py::sequence py_shape, float pixel_size,
     poni.rot3 = py_poni.attr("rot3").cast<float>();
     poni.wavelength = py_poni.attr("wavelength").cast<float>();
     
-    Unit output_unit = Unit::q;
-    if (unit == "2th") {
+    long shape[] = {py_shape[0].cast<long>(), 
+                    py_shape[1].cast<long>()};
+                    
+    Unit output_unit;
+    if (unit == "q") {
+        output_unit = Unit::q;
+    }
+    else {
         output_unit = Unit::tth;
     }
     
-    long shape[2];
-    shape[0] = py_shape[0].cast<long>();
-    shape[1] = py_shape[1].cast<long>();
-    
-    int nrows = 0;
     int max_threads = omp_get_max_threads();
     std::vector<RListMatrix> segments;
-    
-    py::array_t<float, py::array::c_style | py::array::forcecast> radial_bins(bins[0]);
     int nradial_bins = radial_bins.size() - 1;
+    
+    int nrows, nphi_bins;
+    float* phi_data;
     // 1D integration
-    if (bins.size() == 1) {
+    if (!phi_bins.has_value()) {
         nrows = nradial_bins;
-        segments.resize(max_threads, nrows);
-        generate_matrix(shape, n_splitting, pixel_size, 
-                        segments, poni, mask.data(), 
-                        nradial_bins, radial_bins.data(),
-                        0, nullptr, output_unit);
+        nphi_bins = 0;
+        phi_data = nullptr;
+    }
+    // 2D integration
+    else {
+        nphi_bins = phi_bins.value().size() - 1;
+        nrows = nphi_bins * nradial_bins;
+        phi_data = phi_bins.value().mutable_data();
     }
     
-    // 2D integraion
-    if (bins.size() == 2) {
-        py::array_t<float, py::array::c_style | py::array::forcecast> phi_bins(bins[1]);
-        int nphi_bins = phi_bins.size() - 1;
-        nrows = nphi_bins * nradial_bins;
-        segments.resize(max_threads, nrows);
-        generate_matrix(shape, n_splitting, pixel_size, 
-                           segments, poni, mask.data(), 
-                           nradial_bins, radial_bins.data(),
-                           nphi_bins, phi_bins.data(), output_unit);
-    }
+    segments.resize(max_threads, nrows);
+    generate_matrix(shape, 
+                    n_splitting, 
+                    pixel_size, 
+                    segments, 
+                    poni, 
+                    mask.data(),
+                    output_unit,
+                    nradial_bins, radial_bins.data(),
+                    nphi_bins, phi_data);
     
     tocsr(segments, nrows, col_idx, row_ptr, values);
 }
 
-// sparse matrix vector multiplication
+Sparse::Sparse(std::vector<int>&& c,
+               std::vector<int>&& r,
+               std::vector<float>&& v,
+               std::vector<float>&& vc,
+               std::vector<float>&& vc2) : col_idx(c), row_ptr(r), values(v), values_corrected(vc), values_corrected2(vc2)
+{
+}
+
+void Sparse::set_correction(py::array_t<float> corrections)
+{
+    values_corrected.resize(values.size());
+    values_corrected2.resize(values.size());
+    const float* cdata = corrections.data();
+    int nrows = row_ptr.size() - 1;
+    for (long i=0; i<nrows; i++) {
+        for (int j=row_ptr[i]; j<row_ptr[i+1]; j++) {
+            // values_corrected = c / (solidangle * polarization)
+            values_corrected[j] = values[j] / cdata[col_idx[j]];
+            // values_corrected2 = c**2 / (solidangle**2 * polarization**2) for error progagation
+            values_corrected2[j] = values[j] * values[j] / (cdata[col_idx[j]] * cdata[col_idx[j]]);
+        }
+    }
+}
+
+
+// sparse matrix vector multiplication A * x with sparse matrix A and vector x
 template <typename T>
 void _spmv(long nrows, const std::vector<int>& col_idx, 
            const std::vector<int>& row_ptr, 
@@ -289,10 +265,14 @@ void _spmv(long nrows, const std::vector<int>& col_idx,
     }
 }
 
-py::array_t<float> Sparse::spmv(py::array x)
+py::array_t<float> spmv(const std::vector<int>& col_idx, 
+                        const std::vector<int>& row_ptr, 
+                        const std::vector<float>& values,
+                        const py::array& x)
 {
     int nrows = row_ptr.size() - 1;
     py::array_t<float,  py::array::c_style> b(nrows);
+    
     if (py::isinstance<py::array_t<uint8_t>>(x)) {
         _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint8_t*)x.data());
     }
@@ -320,18 +300,38 @@ py::array_t<float> Sparse::spmv(py::array x)
     return b;
 }
 
+py::array_t<float> Sparse::spmv(py::array x)
+{
+    return ::spmv(col_idx, row_ptr, values, x);
+}
+
+py::array_t<float> Sparse::spmv_corrected(py::array x)
+{
+    return ::spmv(col_idx, row_ptr, values_corrected, x);
+}
+
+py::array_t<float> Sparse::spmv_corrected2(py::array x)
+{
+    return ::spmv(col_idx, row_ptr, values_corrected2, x);
+}
+
 PYBIND11_MODULE(_azint, m) {
     py::class_<Sparse>(m, "Sparse")
-        .def(py::init<py::object, py::sequence, float, int, py::array_t<int8_t>, py::sequence, std::string>())
+        .def(py::init<py::object, py::sequence, float, int, py::array_t<int8_t>, std::string, py::array_t<float>, std::optional<py::array_t<float> > >())
+        .def("set_correction", &Sparse::set_correction)
         .def("spmv", &Sparse::spmv)
+        .def("spmv_corrected", &Sparse::spmv_corrected)
+        .def("spmv_corrected2", &Sparse::spmv_corrected2)
         .def(py::pickle(
             [](const Sparse &s) {
-                return py::make_tuple(s.col_idx, s.row_ptr, s.values);
+                return py::make_tuple(s.col_idx, s.row_ptr, s.values, s.values_corrected, s.values_corrected2);
             },
             [](py::tuple t) {
                 Sparse s(std::move(t[0].cast<std::vector<int> >()),
                          std::move(t[1].cast<std::vector<int> >()),
-                         std::move(t[2].cast<std::vector<float> >()));
+                         std::move(t[2].cast<std::vector<float> >()),
+                         std::move(t[3].cast<std::vector<float> >()),
+                         std::move(t[4].cast<std::vector<float> >()));
                 return s;
             }
         ));

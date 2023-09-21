@@ -96,9 +96,6 @@ class AzimuthalIntegrator():
         if error_model and error_model != 'poisson':
             raise RuntimeError('Only poisson error model is supported')
         
-        if error_model and n_splitting > 1:
-            raise RuntimeError('Cannot estimate errors with pixel splitting.\n Set n_splitting to 1 for error estimation')
-        
         if unit not in ('q', '2th'):
             raise RuntimeError('Wrong radial unit. Allowed units: q, 2th')
         
@@ -108,7 +105,7 @@ class AzimuthalIntegrator():
         self.poni = Poni(poni_file)
         
         if mask is None:
-            mask = np.zeros(shape, dtype=np.uint8)
+            mask = np.zeros(shape, dtype=np.int8)
         elif mask.shape != shape:
             raise RuntimeError('Img shape %s is different from mask shape %s' %(shape, mask.shape))
         
@@ -139,18 +136,16 @@ class AzimuthalIntegrator():
                 self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
                 radial_bins = np.deg2rad(radial_bins)
                 
-        bins = [radial_bins]
-        
+        self.output_shape = [len(radial_bins) - 1]
         self.azimuth_axis = None
         if azimuth_bins is not None:
             if not isinstance(azimuth_bins, Iterable):
                 azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
             self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1])
-            bins.append(azimuth_bins)
+            self.output_shape = [len(azimuth_bins) - 1, len(radial_bins) - 1]
             
         self.input_size = np.prod(shape)
-        self.output_shape = [len(axis)-1 for axis in bins[::-1]]
-        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, bins, unit)
+        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, unit, radial_bins, azimuth_bins)
         self.corrections = np.ones(shape[0]*shape[1], dtype=np.float32)
         if solid_angle:
             solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)
@@ -159,10 +154,11 @@ class AzimuthalIntegrator():
         if polarization_factor:
             phi = np.arctan2(pos[0], pos[1])
             cos2_tth = np.cos(tth) ** 2
-            polarization = 0.5 * (1.0 + cos2_tth - polarization_factor * np.cos(2.0 * (phi)) * (1.0 - cos2_tth))
+            polarization = 0.5 * (1.0 + cos2_tth - polarization_factor * np.cos(2.0 * phi) * (1.0 - cos2_tth))
             self.corrections *= polarization.reshape(-1)
             
-        self.norm = self.sparse_matrix.spmv(self.corrections)
+        self.norm = self.sparse_matrix.spmv(np.ones(shape[0]*shape[1], dtype=np.float32))
+        self.sparse_matrix.set_correction(self.corrections)
             
     def integrate(self, 
                   img: np.ndarray, 
@@ -187,21 +183,19 @@ class AzimuthalIntegrator():
         else:
             inverted_mask = 1 - mask
             img = img*inverted_mask
-            norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1)*self.corrections)
+            norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1))
                 
-        signal = self.sparse_matrix.spmv(img).reshape(self.output_shape)
+        signal = self.sparse_matrix.spmv_corrected(img).reshape(self.output_shape)
         norm = norm.reshape(self.output_shape)
         
         errors = None
         if self.error_model:
             # poisson error model
-            errors = np.sqrt(signal)
-            errors = errors.reshape(self.output_shape)
+            errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
+            errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
         
         if normalized:
             result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-            if errors is not None:
-                errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
             return result, errors
         else:
             return signal, errors, norm
