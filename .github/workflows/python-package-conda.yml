@@ -17,12 +17,12 @@ jobs:
     - name: Install conda-build
       shell: bash -l {0}
       run: conda install conda-build setuptools_scm
-    - name: Print from test.py
+    - name: get version from setuptools_scm
       shell: bash -l {0}
       run: |
-        export INPUT_STORE=$(python -m setuptools_scm)
-        echo "Access direct: "
-        echo $INPUT_STORE
+        export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
+        echo "Version: "
+        echo $SETUPTOOLS_SCM_PRETEND_VERSION
     - name: Build package
       shell: bash -l {0}
       run: conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
