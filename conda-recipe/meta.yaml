@@ -1,14 +1,12 @@
-{% set version = "0.8.5" %}
-
 package:
   name: azint
-  version: {{ version }}
+  version: '{{ SETUPTOOLS_SCM_PRETEND_VERSION }}'
 
 source:
   path: ..
 
 build:
-  number: 4
+  number: 1
   script: pip install .
 requirements:
   build:
@@ -18,6 +16,7 @@ requirements:
     - python
     - numpy
     - pybind11
+    - setuptools_scm
     
   run:
     - python

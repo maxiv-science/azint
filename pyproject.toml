@@ -1,0 +1,6 @@
+[build-system]
+requires = ['setuptools>=60', 'wheel', 'pybind11>=2.11.0', 'setuptools_scm>=8.0']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+write_to = 'azint/_version.py'
