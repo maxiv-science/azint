@@ -18,10 +18,10 @@ jobs:
       shell: bash -l {0}
       run: conda install conda-build setuptools_scm
     - name: Print from test.py
-        run: |
-           export INPUT_STORE=$(python -m setuptools_scm)
-           echo "Access direct: "
-           echo $INPUT_STORE
+      run: |
+        export INPUT_STORE=$(python -m setuptools_scm)
+        echo "Access direct: "
+        echo $INPUT_STORE
     - name: Build package
       shell: bash -l {0}
       run: |
