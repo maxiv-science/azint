@@ -25,7 +25,9 @@ jobs:
         echo $SETUPTOOLS_SCM_PRETEND_VERSION
     - name: Build package
       shell: bash -l {0}
-      run: conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+      run: |
+        echo $SETUPTOOLS_SCM_PRETEND_VERSION
+        conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
