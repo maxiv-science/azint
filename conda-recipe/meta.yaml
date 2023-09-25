@@ -1,8 +1,6 @@
-{% set data = load_setup_py_data() %}
-
 package:
   name: azint
-  version: {{ data.get('version') }}
+  version: "{{ SETUPTOOLS_SCM_PRETEND_VERSION }}"
 
 source:
   path: ..
