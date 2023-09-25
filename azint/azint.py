@@ -87,6 +87,7 @@ class AzimuthalIntegrator():
             polarization_factor: Polarization factor for the polarization correction
                 1 (linear horizontal polarization)
                 -1 (linear vertical polarization)
+            error_model: Error model used to calculate errors in the integration. Only options is Poisson error model
             
         Attributes:
             radial_axis (ndarray): radial axis depeding on units in q or 2theta
