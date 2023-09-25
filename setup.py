@@ -3,16 +3,18 @@ from setuptools import setup, find_packages, Extension
 from pybind11.setup_helpers import Pybind11Extension
 
 if sys.platform == 'win32':
-    openmp_flag = '/openmp'
+    compile_args = ['/std:c++17', '/openmp']
+    link_ars = ['/openmp']
 else:
-    openmp_flag = '-fopenmp'
+    compile_args = ['-std=c++17', '-fopenmp']
+    link_ars = ['-fopenmp']
 
 ext_modules = [
     Pybind11Extension(
         '_azint',
         ['azint.cpp'],
-        extra_compile_args=[openmp_flag],
-        extra_link_args=[openmp_flag]
+        extra_compile_args=compile_args,
+        extra_link_args=link_ars
     ),
 ]
 
