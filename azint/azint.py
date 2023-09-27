@@ -87,7 +87,7 @@ class AzimuthalIntegrator():
             polarization_factor: Polarization factor for the polarization correction
                 1 (linear horizontal polarization)
                 -1 (linear vertical polarization)
-            error_model: Error model used to calculate errors in the transformation. Only options is Poisson error model
+            error_model: Error model used to calculate errors in the transformation. Only options is 'poisson' error model
             
         Attributes:
             radial_axis (ndarray): radial axis depeding on units in q or 2theta
@@ -164,14 +164,16 @@ class AzimuthalIntegrator():
     def integrate(self, 
                   img: np.ndarray, 
                   mask: Optional[np.ndarray] = None,
-                  normalized: bool = True) -> tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
+                  normalized: Optional[bool] = True) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
         """
-        Calculate the azimuthal integration of the input image
+        Calculates the azimuthal integration of the input image
+        
         Args:
             img: Input image to be integrated
             mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
                 the constructor is more efficient
             normalized: Whether to return the normalized result or the integrated signal and norm separately
+        
         Returns:
             azimuthal integrated image or just integrated signal if normalized is True
             standard error of the mean (SEM) when error_model is specified else None
