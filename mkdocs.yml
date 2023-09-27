@@ -1,5 +1,4 @@
 site_name: azint
-site_url: https://example.com/
 
 theme:
   name: "material"
@@ -17,7 +16,7 @@ extra_javascript:
 
 plugins:
   - search
-  - mkdocstrings 
+  - mkdocstrings
 
 nav:
   - Home: index.md
