@@ -393,6 +393,7 @@
 <p>azint is a python library for azimuthal integration of area detectors.
 The azimuthal integration is transformed into a sparse matrix vector multiplication for performance. Pixel splitting is done by subdividing 
 each pixels into subpixels and assigning bins and weights for the individual subpixels. This can increase the precision of the transformation but also introduces correlation between neighboring bins.</p>
+<p>The algorithm is described in more detail in this <a href="https://doi.org/10.1107/S1600577522008232">publication</a>. Please cite the paper if you use azint.</p>
 <div class="arithmatex">\[
 I_{bin} = \frac{ \sum_{pix \in bin} c^{pix}_{bin} \frac{I_{pix}}{\Omega_{pix} P_{pix}}}{\sum_{pix \in bin}c^{pix}_{bin}}
 \]</div>
