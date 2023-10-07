@@ -142,6 +142,8 @@ class AzimuthalIntegrator():
         if azimuth_bins is not None:
             if not isinstance(azimuth_bins, Iterable):
                 azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
+            else:
+                azimuth_bins = np.asarray(azimuth_bins)
             self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1])
             self.output_shape = [len(azimuth_bins) - 1, len(radial_bins) - 1]
             
