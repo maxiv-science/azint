@@ -18,14 +18,14 @@ jobs:
         miniforge-version: latest
     - name: Install conda-build
       shell: bash -l {0}
-      run: conda install conda-build setuptools_scm
+      run: conda install conda-build setuptools_scm boa
     - name: build package
       shell: bash -l {0}
       run: |
         export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
         echo "Version: "
         echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda build $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
