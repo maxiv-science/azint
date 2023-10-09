@@ -16,6 +16,7 @@ requirements:
     - python
     - numpy
     - pybind11
+    - setuptools_scm
     
   run:
     - python
