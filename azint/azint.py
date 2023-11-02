@@ -71,7 +71,8 @@ class AzimuthalIntegrator():
                  mask: np.ndarray = None, 
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
-                 error_model: Optional[str] = None):
+                 error_model: Optional[str] = None,
+                 pixel_corners: np.ndarray = None):
         """
         Args:
             poni_file: Name of Poni file that sets up the geometry
@@ -148,7 +149,7 @@ class AzimuthalIntegrator():
             self.output_shape = [len(azimuth_bins) - 1, len(radial_bins) - 1]
             
         self.input_size = np.prod(shape)
-        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, unit, radial_bins, azimuth_bins)
+        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, unit, radial_bins, azimuth_bins, pixel_corners)
         self.corrections = np.ones(shape[0]*shape[1], dtype=np.float32)
         if solid_angle:
             solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)

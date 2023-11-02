@@ -85,7 +85,8 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                      const Poni& poni, const int8_t* mask,
                      const Unit& output_unit,
                      int nradial_bins, const float* radial_bins,
-                     int nphi_bins, float* phi_bins)
+                     int nphi_bins, float* phi_bins,
+		             const float* pixel_corners)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
@@ -98,13 +99,48 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
             if (mask[pixel_index]) {
                 continue;
             }
-            for (int k=0; k<n_splitting; k++) {
-                for (int l=0; l<n_splitting; l++) {
+            const float origin[]=
+                {
+                *(pixel_corner),
+                *(pixel_corner+1),
+                *(pixel_corner+2)
+                };
+            const float AB[]=
+                {
+                *(pixel_corner+3) - *(pixel_corner),
+                *(pixel_corner+4) - *(pixel_corner+1),
+                *(pixel_corner+5) - *(pixel_corner+2)
+                };
+            const float AD[]=
+                {
+                *(pixel_corner+6) - *(pixel_corner),
+                *(pixel_corner+7) - *(pixel_corner+1),
+                *(pixel_corner+8) - *(pixel_corner+2)
+                };
+            // this is because there are four corners and 3 coordinates.
+            pixel_corner+=12;
+            
+            for(size_t ii=0;ii<3;ii++)
+                {
+                AB[ii]/=static_cast<float>(n_splitting);
+                AD[ii]/=static_cast<float>(n_splitting);
+                }
+            
+            for (int k=1; k<n_splitting + 1; k++) {
+                for (int l=1; l<n_splitting + 1; l++) {
+                const float p[] = {
+                    origin[0]+k*AB[0]+l*AD[0] - (AB[0]/(2*n_splitting) + AD[0]/(2*n_splitting)),
+                    origin[1]+k*AB[1]+l*AD[1] - (AB[1]/(2*n_splitting) + AD[1]/(2*n_splitting)),
+                    // origin[2]+k*basisA[2]+l*basisB[2],
+                    poni.dist
+                }
+                /*		  
                     float p[] = {
                         (i + (k + 0.5f) / n_splitting) * pixel_size - poni.poni1,
                         (j + (l + 0.5f) / n_splitting) * pixel_size - poni.poni2,
                         poni.dist
                     };
+                */
                     float pos[3];
                     dot(pos, rot, p);
                     
@@ -168,7 +204,8 @@ Sparse::Sparse(py::object py_poni,
                py::array_t<int8_t> mask,
                const std::string& unit,
                py::array_t<float, py::array::c_style | py::array::forcecast> radial_bins,
-               std::optional<py::array_t<float, py::array::c_style | py::array::forcecast> > phi_bins)
+               std::optional<py::array_t<float, py::array::c_style | py::array::forcecast> > phi_bins,
+               py::array_t<float> pixel_corners)
 {
     Poni poni;
     poni.dist = py_poni.attr("dist").cast<float>();
@@ -218,7 +255,8 @@ Sparse::Sparse(py::object py_poni,
                     mask.data(),
                     output_unit,
                     nradial_bins, radial_bins.data(),
-                    nphi_bins, phi_data);
+                    nphi_bins, phi_data,
+                    pixel_corners.data());
     
     tocsr(segments, nrows, col_idx, row_ptr, values);
 }
