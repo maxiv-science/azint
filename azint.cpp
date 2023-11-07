@@ -120,13 +120,6 @@ void generate_matrix(const Poni& poni,
             for (int k=0; k<n_splitting; k++) {
                 float delta1 = (k + 0.5) / n_splitting;
                 for (int l=0; l<n_splitting; l++) {
-                    /*
-                    float p[] = {
-                        (i + (k + 0.5f) / n_splitting) * pixel_size - poni.poni1,
-                        (j + (l + 0.5f) / n_splitting) * pixel_size - poni.poni2,
-                        poni.dist
-                    };
-                    */
                     float delta2 = (l + 0.5) / n_splitting;
                     float p[] = {
                         A1 + delta1 * BA1 + delta2 * DA1 - poni.poni1,

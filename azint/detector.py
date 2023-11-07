@@ -1,4 +1,7 @@
-import h5py
+try:
+    import h5py
+except ImportError:
+    h5py = None
 import numpy as np
 
 '''
@@ -48,6 +51,8 @@ class Detector():
 
 class NexusDetector(Detector):
     def __init__(self, filename):
+        if not h5py:
+            raise RuntimeError('h5py module missing: NexusDetector is not supported') 
         
         def find_det(name, item):
             if item.attrs.get('NX_class') == 'NXdetector':
