@@ -1,14 +1,32 @@
 import os
-import numpy as np
-from _azint import Sparse
+import json
+from dataclasses import dataclass
 from typing import Optional, Union
 from collections.abc import Sequence, Iterable
+import numpy as np
+from .detector import Detector
+from _azint import Sparse
 
-class Poni():
-    def __init__(self, filename):
+
+__all__ = ['Poni', 'AzimuthalIntegrator']
+
+
+@dataclass
+class Poni:
+    det: Detector
+    dist: float
+    poni1: float
+    poni2: float
+    rot1: float
+    rot2: float
+    rot3: float
+    wavelength: float
+    
+    @classmethod
+    def from_file(cls, filename):
         config = {}
-        with open(filename) as opened_file:
-            for line in opened_file:
+        with open(filename) as fh:
+            for line in fh:
                 if line.startswith("#") or (":" not in line):
                     continue
                 words = line.split(":", 1)
@@ -16,14 +34,19 @@ class Poni():
                 value = words[1].strip()
                 config[key] = value
                 
-        self.dist = float(config['distance'])
-        self.poni1 = float(config['poni1'])
-        self.poni2 = float(config['poni2'])
-        self.rot1 = float(config['rot1'])
-        self.rot2 = float(config['rot2'])
-        self.rot3 = float(config['rot3'])
-        self.wavelength = float(config['wavelength'])
-        
+        det_name = config['detector']
+        det_config = json.loads(config['detector_config'])
+        det = Detector.factory(det_name, det_config)
+        return cls(det, 
+                   float(config['distance']), 
+                   float(config['poni1']), 
+                   float(config['poni2']), 
+                   float(config['rot1']), 
+                   float(config['rot2']),
+                   float(config['rot3']),
+                   float(config['wavelength']))
+    
+
 def rotation_matrix(poni: Poni):
     cos_rot1 = np.cos(poni.rot1)
     cos_rot2 = np.cos(poni.rot2)
@@ -50,20 +73,67 @@ def rotation_matrix(poni: Poni):
     rotation_matrix = np.dot(np.dot(rot3, rot2), rot1)
     return rotation_matrix
 
-def calc_coordinates(shape, pixel_size, poni):
-    d1 = (np.arange(shape[0], dtype=np.float32) + 0.5) * pixel_size - poni.poni1
-    d2 = (np.arange(shape[1], dtype=np.float32) + 0.5) * pixel_size - poni.poni2
-    p2, p1 = np.meshgrid(d2, d1)
-    return p1, p2
+
+def transform(poni, p1, p2, p3):
+    rot = rotation_matrix(poni)
+    pos = np.dot(rot, np.vstack((p1.reshape(-1), p2.reshape(-1), p3.reshape(-1))))
+    r = np.sqrt(pos[0]**2 + pos[1]**2)
+    tth = np.arctan2(r, pos[2])
+    phi = np.arctan2(pos[0], pos[1])
+    return tth, phi
+
+
+def setup_radial_bins(poni, radial_bins, unit, tth):
+    if unit == 'q':
+        # calculate auto range min/max radial bins
+        if not isinstance(radial_bins, Iterable):
+            # q = 4pi/lambda sin( 2theta / 2 ) in A-1
+            q = 4.0e-10 * np.pi / poni.wavelength * np.sin(0.5*tth)
+            radial_bins = np.linspace(np.amin(q), np.amax(q), radial_bins+1)
+        else:
+            radial_bins = np.asarray(radial_bins)
+                
+    elif unit == '2th':
+        # radial bins in 2th are in deg
+        if not isinstance(radial_bins, Iterable):
+            radial_bins = np.rad2deg(np.linspace(np.amin(tth), np.amax(tth), radial_bins+1))
+        else:
+            radial_bins = np.asarray(radial_bins)
+                
+    return radial_bins
+    
+    
+def setup_azimuth_bins(azimuth_bins):
+    if azimuth_bins is None:
+        return None
+    
+    if not isinstance(azimuth_bins, Iterable):
+        azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
+    else:
+        azimuth_bins = np.asarray(azimuth_bins)
+    return azimuth_bins
+
+    
+def setup_corrections(poni, solid_angle, polarization_factor, p1, p2, tth, phi):
+    corrections = np.ones(p1.size, dtype=np.float32)
+    if solid_angle:
+        solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
+        corrections *= (solid_angle**3).reshape(-1)
+            
+    if polarization_factor:
+        cos2_tth = np.cos(tth) ** 2
+        polarization = 0.5 * (1.0 + cos2_tth - polarization_factor * np.cos(2.0 * phi) * (1.0 - cos2_tth))
+        corrections *= polarization.reshape(-1)
+        
+    return corrections
+
 
 class AzimuthalIntegrator():
     """
     This class is an azimuthal integrator 
     """
-    def __init__(self, 
-                 poni_file: str, 
-                 shape: tuple[int, int], 
-                 pixel_size: float, 
+    def __init__(self,
+                 poni: Union[str, Poni],
                  n_splitting: int, 
                  radial_bins: Union[int, Sequence],
                  azimuth_bins: Optional[Union[int, Sequence]] = None,
@@ -74,10 +144,7 @@ class AzimuthalIntegrator():
                  error_model: Optional[str] = None):
         """
         Args:
-            poni_file: Name of Poni file that sets up the geometry
-                of the integrator
-            shape: Shape of the images to be integrated
-            pixel_size: Pixel size of detector
+            poni: Name of Poni file or instance of Poni
             n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually
             radial_bins: radial bins can either be number of bins or a sequence defining the bin edges in Angstrom^-1.
             azimuth_bins: azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.
@@ -100,69 +167,40 @@ class AzimuthalIntegrator():
         if unit not in ('q', '2th'):
             raise RuntimeError('Wrong radial unit. Allowed units: q, 2th')
         
+        if isinstance(poni, str):
+            poni = Poni.from_file(poni)
+        
         self.unit = unit
         self.error_model = error_model
-        self.polarization_factor = polarization_factor
-        self.poni = Poni(poni_file)
         
+        pixel_centers = np.mean(poni.det.pixel_corners, axis=2)
+        p1 = pixel_centers[..., 1] - poni.poni1
+        p2 = pixel_centers[..., 2] - poni.poni2
+        p3 = pixel_centers[..., 0] + poni.dist
+        tth, phi = transform(poni, p1, p2, p3)
+        
+        radial_bins = setup_radial_bins(poni, radial_bins, unit, tth)
+        self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
+        azimuth_bins = setup_azimuth_bins(azimuth_bins)
+        self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1]) if azimuth_bins is not None else None
+        
+        shape = pixel_centers.shape[:2]
+        self.input_size = np.prod(shape)
         if mask is None:
             mask = np.zeros(shape, dtype=np.int8)
-        elif mask.shape != shape:
-            raise RuntimeError('Img shape %s is different from mask shape %s' %(shape, mask.shape))
         
-        p1, p2 = calc_coordinates(shape, pixel_size, self.poni)
-        p3 = np.ones(np.prod(shape), dtype=np.float32)*self.poni.dist
-        pos = np.dot(rotation_matrix(self.poni), 
-                         np.vstack((p1.reshape(-1), p2.reshape(-1), p3)))
-        r = np.sqrt(pos[0]**2 + pos[1]**2)
-        tth = np.arctan2(r, pos[2])
-        
-        if unit == 'q':
-            # calculate auto range min/max radial bins
-            if not isinstance(radial_bins, Iterable):
-                # q = 4pi/lambda sin( 2theta / 2 ) in A-1
-                q = 4.0e-10 * np.pi / self.poni.wavelength * np.sin(0.5*tth)
-                radial_bins = np.linspace(np.amin(q), np.amax(q), radial_bins+1)
-            else:
-                radial_bins = np.asarray(radial_bins)
-                
-            self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
-            
-        elif unit == '2th':
-            if not isinstance(radial_bins, Iterable):
-                radial_bins = np.linspace(np.amin(tth), np.amax(tth), radial_bins+1)
-                self.radial_axis = np.rad2deg(0.5*(radial_bins[1:] + radial_bins[:-1]))
-            # custom q range in degrees
-            else:
-                self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
-                radial_bins = np.deg2rad(radial_bins)
-                
-        self.output_shape = [len(radial_bins) - 1]
-        self.azimuth_axis = None
-        if azimuth_bins is not None:
-            if not isinstance(azimuth_bins, Iterable):
-                azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
-            else:
-                azimuth_bins = np.asarray(azimuth_bins)
-            self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1])
+        if azimuth_bins is None:
+            self.output_shape = [len(radial_bins) - 1]
+        else:
             self.output_shape = [len(azimuth_bins) - 1, len(radial_bins) - 1]
-            
-        self.input_size = np.prod(shape)
-        self.sparse_matrix = Sparse(self.poni, shape, pixel_size, n_splitting, mask, unit, radial_bins, azimuth_bins)
-        self.corrections = np.ones(shape[0]*shape[1], dtype=np.float32)
-        if solid_angle:
-            solid_angle = self.poni.dist / np.sqrt(self.poni.dist**2 + p1*p1 + p2*p2)
-            self.corrections *= (solid_angle**3).reshape(-1)
-            
-        if polarization_factor:
-            phi = np.arctan2(pos[0], pos[1])
-            cos2_tth = np.cos(tth) ** 2
-            polarization = 0.5 * (1.0 + cos2_tth - polarization_factor * np.cos(2.0 * phi) * (1.0 - cos2_tth))
-            self.corrections *= polarization.reshape(-1)
-            
+        
+        self.sparse_matrix = Sparse(poni, poni.det.pixel_corners, n_splitting, 
+                                    mask, unit, radial_bins, azimuth_bins)
         self.norm = self.sparse_matrix.spmv(np.ones(shape[0]*shape[1], dtype=np.float32))
-        self.sparse_matrix.set_correction(self.corrections)
-            
+        corrections = setup_corrections(poni, solid_angle, polarization_factor, p1, p2, tth, phi)
+        self.sparse_matrix.set_correction(corrections)
+        
+        
     def integrate(self, 
                   img: np.ndarray, 
                   mask: Optional[np.ndarray] = None,
@@ -205,3 +243,4 @@ class AzimuthalIntegrator():
             return result, errors
         else:
             return signal, errors, norm
+        
