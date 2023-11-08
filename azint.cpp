@@ -110,12 +110,15 @@ void generate_matrix(const Poni& poni,
             
             float A1 = pc(i, j, 0, 1);
             float A2 = pc(i, j, 0, 2);
+            float A3 = pc(i, j, 0, 0);
             
             float BA1 = pc(i, j, 1, 1) - A1;
             float BA2 = pc(i, j, 1, 2) - A2;
+            float BA3 = pc(i, j, 1, 0) - A3;
             
             float DA1 = pc(i, j, 3, 1) - A1;
             float DA2 = pc(i, j, 3, 2) - A2;
+            float DA3 = pc(i, j, 3, 0) - A3;
             
             for (int k=0; k<n_splitting; k++) {
                 float delta1 = (k + 0.5) / n_splitting;
@@ -124,7 +127,7 @@ void generate_matrix(const Poni& poni,
                     float p[] = {
                         A1 + delta1 * BA1 + delta2 * DA1 - poni.poni1,
                         A2 + delta1 * BA2 + delta2 * DA2 - poni.poni2,
-                        poni.dist
+                        A3 + delta1 * BA3 + delta2 * DA3 + poni.dist
                     };
                     float pos[3];
                     dot(pos, rot, p);
