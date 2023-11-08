@@ -1,3 +1,4 @@
+import inspect
 try:
     import h5py
 except ImportError:
@@ -23,7 +24,11 @@ class Detector():
      
     @classmethod
     def factory(cls, name, config = {}):
-        return globals()[name](**config)
+        cls = globals().get(name)
+        if inspect.isclass(cls) and issubclass(cls, Detector):
+            return cls(**config)
+        else:
+            raise RuntimeError(f'Detector {name} not supported')
     
     
     def get_pixel_corners(self, pixel1, pixel2, shape):
