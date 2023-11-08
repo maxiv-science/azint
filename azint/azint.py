@@ -219,6 +219,8 @@ class AzimuthalIntegrator():
             standard error of the mean (SEM) when error_model is specified else None
             the norm if normalized is False
         """
+        img = np.ascontiguousarray(img)
+        
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
         if mask is None:

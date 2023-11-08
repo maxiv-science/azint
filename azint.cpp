@@ -96,7 +96,6 @@ void generate_matrix(const Poni& poni,
     // A D
     // B C
     auto pc = pixel_corners.unchecked<4>();
-    
     auto shape = pixel_corners.shape();
     
     #pragma omp parallel for schedule(static)
