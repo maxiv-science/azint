@@ -419,8 +419,7 @@ SE_{bin} = \frac{ \sqrt{\sum_{pix \in bin} (c^{pix}_{bin})^2 \frac{\sigma^2_{pix
 <span class="n">mask</span> <span class="o">=</span> <span class="n">fabio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;mask.tif&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">data</span>
 <span class="c1"># 1D integration</span>
 <span class="n">ai</span> <span class="o">=</span> <span class="n">AzimuthalIntegrator</span><span class="p">(</span><span class="s1">&#39;test.poni&#39;</span><span class="p">,</span> 
-                          <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> 
-                          <span class="mf">75.0e-6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> 
+                          <span class="mi">4</span><span class="p">,</span> 
                           <span class="mi">2000</span><span class="p">,</span>
                           <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span>
                           <span class="n">solid_angle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -433,8 +432,7 @@ SE_{bin} = \frac{ \sqrt{\sum_{pix \in bin} (c^{pix}_{bin})^2 \frac{\sigma^2_{pix
 
 <span class="c1"># 2D integration</span>
 <span class="n">ai</span> <span class="o">=</span> <span class="n">AzimuthalIntegrator</span><span class="p">(</span><span class="s1">&#39;test.poni&#39;</span><span class="p">,</span> 
-                          <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> 
-                          <span class="mf">75.0e-6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> 
+                          <span class="mi">4</span><span class="p">,</span> 
                           <span class="mi">512</span><span class="p">,</span> 
                           <span class="mi">180</span><span class="p">,</span> 
                           <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span>
