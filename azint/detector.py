@@ -188,3 +188,18 @@ class Pilatus4_1M(Pilatus4):
 class Pilatus4_2M(Pilatus4):
     max_shape = (1630, 1553)
     
+    
+class Pilatus4_4M(Pilatus4):
+    max_shape = (2180, 2073)
+    
+    
+class Pilatus4_CdTe_1M(Pilatus4):
+    max_shape = (1080, 1033)
+    
+
+class Pilatus4_CdTe_2M(Pilatus4):
+    max_shape = (1630, 1553)
+    
+    
+class Pilatus4_CdTe_4M(Pilatus4):
+    max_shape = (2180, 2073)
