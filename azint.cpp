@@ -80,15 +80,23 @@ void rotation_matrix(float rot[3][3], Poni poni)
     matrix_multiplication(rot, tmp, rot1);
 }
 
-void generate_matrix(long shape[2], int n_splitting, float pixel_size, 
+void generate_matrix(const Poni& poni,
+                     const py::array_t<float>& pixel_corners,
+                     int n_splitting, 
                      std::vector<RListMatrix>& segments,
-                     const Poni& poni, const int8_t* mask,
+                     const int8_t* mask,
                      const Unit& output_unit,
                      int nradial_bins, const float* radial_bins,
                      int nphi_bins, float* phi_bins)
 {
     float rot[3][3];
     rotation_matrix(rot, poni);
+    
+    // h, w, corner index [A, B, C, D], coordinates [z, y, x]
+    // A D
+    // B C
+    auto pc = pixel_corners.unchecked<4>();
+    auto shape = pixel_corners.shape();
     
     #pragma omp parallel for schedule(static)
     for (int i=0; i<shape[0]; i++) {
@@ -98,12 +106,27 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
             if (mask[pixel_index]) {
                 continue;
             }
+            
+            float A1 = pc(i, j, 0, 1);
+            float A2 = pc(i, j, 0, 2);
+            float A3 = pc(i, j, 0, 0);
+            
+            float BA1 = pc(i, j, 1, 1) - A1;
+            float BA2 = pc(i, j, 1, 2) - A2;
+            float BA3 = pc(i, j, 1, 0) - A3;
+            
+            float DA1 = pc(i, j, 3, 1) - A1;
+            float DA2 = pc(i, j, 3, 2) - A2;
+            float DA3 = pc(i, j, 3, 0) - A3;
+            
             for (int k=0; k<n_splitting; k++) {
+                float delta1 = (k + 0.5) / n_splitting;
                 for (int l=0; l<n_splitting; l++) {
+                    float delta2 = (l + 0.5) / n_splitting;
                     float p[] = {
-                        (i + (k + 0.5f) / n_splitting) * pixel_size - poni.poni1,
-                        (j + (l + 0.5f) / n_splitting) * pixel_size - poni.poni2,
-                        poni.dist
+                        A1 + delta1 * BA1 + delta2 * DA1 - poni.poni1,
+                        A2 + delta1 * BA2 + delta2 * DA2 - poni.poni2,
+                        A3 + delta1 * BA3 + delta2 * DA3 + poni.dist
                     };
                     float pos[3];
                     dot(pos, rot, p);
@@ -119,7 +142,8 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
                             break;
 
                         case Unit::tth:
-                            radial_coord = tth;
+                            // convert rad to deg
+                            radial_coord = 180.0f / M_PI * tth;
                             break;
                     }
 
@@ -161,9 +185,8 @@ void generate_matrix(long shape[2], int n_splitting, float pixel_size,
     }
 }
 
-Sparse::Sparse(py::object py_poni, 
-               py::sequence py_shape, 
-               float pixel_size,
+Sparse::Sparse(py::object py_poni,
+               py::array_t<float> pixel_corners,
                int n_splitting, 
                py::array_t<int8_t> mask,
                const std::string& unit,
@@ -179,9 +202,6 @@ Sparse::Sparse(py::object py_poni,
     poni.rot3 = py_poni.attr("rot3").cast<float>();
     poni.wavelength = py_poni.attr("wavelength").cast<float>();
     
-    long shape[] = {py_shape[0].cast<long>(), 
-                    py_shape[1].cast<long>()};
-                    
     Unit output_unit;
     if (unit == "q") {
         output_unit = Unit::q;
@@ -210,11 +230,10 @@ Sparse::Sparse(py::object py_poni,
     }
     
     segments.resize(max_threads, nrows);
-    generate_matrix(shape, 
+    generate_matrix(poni, 
+                    pixel_corners, 
                     n_splitting, 
-                    pixel_size, 
                     segments, 
-                    poni, 
                     mask.data(),
                     output_unit,
                     nradial_bins, radial_bins.data(),
@@ -305,6 +324,9 @@ py::array_t<float> spmv(const std::vector<int>& col_idx,
         py::gil_scoped_release release;
         _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (double*)x.data());
     }
+    else {
+        throw std::runtime_error("data dtype not supported");
+    }
     return b;
 }
 
@@ -325,7 +347,7 @@ py::array_t<float> Sparse::spmv_corrected2(py::array x)
 
 PYBIND11_MODULE(_azint, m) {
     py::class_<Sparse>(m, "Sparse")
-        .def(py::init<py::object, py::sequence, float, int, py::array_t<int8_t>, std::string, py::array_t<float>, std::optional<py::array_t<float> > >())
+        .def(py::init<py::object, py::array_t<float>, int, py::array_t<int8_t>, std::string, py::array_t<float>, std::optional<py::array_t<float> > >())
         .def("set_correction", &Sparse::set_correction)
         .def("spmv", &Sparse::spmv)
         .def("spmv_corrected", &Sparse::spmv_corrected)

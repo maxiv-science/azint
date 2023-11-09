@@ -40,9 +40,8 @@ struct Poni
 class Sparse
 {
 public:
-    Sparse(py::object py_poni, 
-           py::sequence py_shape, 
-           float pixel_size,
+    Sparse(py::object py_poni,
+           py::array_t<float> pixel_corners,
            int n_splitting, 
            py::array_t<int8_t> mask,
            const std::string& unit,

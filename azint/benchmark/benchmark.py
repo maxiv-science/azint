@@ -13,11 +13,7 @@ def benchmark():
     start = time.perf_counter()
     base = os.path.dirname(__file__)
     poni = os.path.join(base, 'bench.poni')
-    ai = AzimuthalIntegrator(poni,
-                            (2167, 2070),
-                            75.0e-6, 4,
-                            2000,
-                            solid_angle=True)
+    ai = AzimuthalIntegrator(poni, 4, 2000)
     end = time.perf_counter()
     print('Initialization time %.1fs' %(end - start))
     nworkers = cpu_count()
