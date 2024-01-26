@@ -120,7 +120,7 @@ def setup_corrections(poni, solid_angle, polarization_factor, p1, p2, tth, phi):
         solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
         corrections *= (solid_angle**3).reshape(-1)
             
-    if polarization_factor:
+    if not polarization_factor is None:
         cos2_tth = np.cos(tth) ** 2
         polarization = 0.5 * (1.0 + cos2_tth - polarization_factor * np.cos(2.0 * phi) * (1.0 - cos2_tth))
         corrections *= polarization.reshape(-1)
