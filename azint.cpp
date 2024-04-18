@@ -80,121 +80,6 @@ void rotation_matrix(float rot[3][3], Poni poni)
     matrix_multiplication(rot, tmp, rot1);
 }
 
-void
-generateQXQYMatrix(const Poni& poni,
-		   const py::array_t<float>& pixel_corners,
-		   int n_splitting, 
-		   std::vector<RListMatrix>& segments,
-		   const int8_t* mask,
-		   int nX, const float* qx_bins,
-		   int nY, const float* qy_bins)
-{
-  float rot[3][3];
-  rotation_matrix(rot, poni);
-  // h, w, corner index [A, B, C, D], coordinates [z, y, x]
-  // A D
-  // B C
-  auto pc = pixel_corners.unchecked<4>();
-  auto shape = pixel_corners.shape();
-
-#pragma omp parallel for schedule(static)
-  
-  for (int i=0; i<shape[0]; i++)
-    {
-      int rank = omp_get_thread_num();
-
-      for (int j=0; j<shape[1]; j++)
-	{
-	  int pixel_index = i*shape[1] + j;
-	  if (mask[pixel_index]) continue;
-
-	  // coordinate of A1/A2/A3
-	  float A1 = pc(i, j, 0, 1);
-	  float A2 = pc(i, j, 0, 2);
-	  float A3 = pc(i, j, 0, 0);
-	  
-	  float BA1 = pc(i, j, 1, 1) - A1;
-	  float BA2 = pc(i, j, 1, 2) - A2;
-	  float BA3 = pc(i, j, 1, 0) - A3;
-          
-	  float DA1 = pc(i, j, 3, 1) - A1;
-	  float DA2 = pc(i, j, 3, 2) - A2;
-	  float DA3 = pc(i, j, 3, 0) - A3;
-          
-	  for (int k=0; k<n_splitting; k++)
-	    {
-	      float delta1 = (k + 0.5) / n_splitting;
-	      for (int l=0; l<n_splitting; l++)
-		{
-		  float delta2 = (l + 0.5) / n_splitting;
-		  float p[] =
-		    {
-		      A1 + delta1 * BA1 + delta2 * DA1 - poni.poni1,
-		      A2 + delta1 * BA2 + delta2 * DA2 - poni.poni2,
-		      A3 + delta1 * BA3 + delta2 * DA3 + poni.dist
-                    };
-		  float pos[3];
-		  dot(pos, rot, p);
-
-		  float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
-		  float tth = atan2f(r, pos[2]);
-		  float phi = atan2f(-pos[0], -pos[1]);
-		  float q=4.0e-10 * M_PI / poni.wavelength * sinf(0.5*tth);
-		  float qxValue=q * sinf(phi);
-		  float qyValue=q * cosf(phi);
-
-		  /*
-		    float phiDeg=180.0*phi/M_PI;
-		  if (((flag & 1) && phiDeg>90.0) ||
-		      ((flag & 2) && phiDeg<45.0 && phiDeg>0.0) ||
-		      ((flag & 4) && phiDeg<0.0))
-		    {
-		      std::cout<<"Qxx = "<<phiDeg<<"["<<q<<"]"
-			       <<" -> "<<qxValue<<":"<<qyValue
-			       <<" == "<<sinf(phi)<<" "<<cosf(phi)<<" xx "
-			       <<q*cosf(phi)-qyValue<<" "<<q*sinf(phi)-qxValue<<" --- "
-			       <<sqrtf(qxValue*qxValue+qyValue*qyValue)-q
-			       <<std::endl;
-		      if (phiDeg>90.0)
-			flag&=6;
-		      else if (phiDeg<0.0)
-			flag&=3;
-		      else 
-			flag&=5;
-		    }
-		  */
-		  auto  qxIter= std::lower_bound
-		    (qx_bins,qx_bins+nX+1,qxValue);
-		  auto  qyIter= std::lower_bound
-		    (qy_bins,qy_bins+nY+1,qyValue);
-		  
-		  int qXindex = std::distance(qx_bins, qxIter) - 1;
-		  int qYindex = std::distance(qy_bins, qyIter) - 1;
-		  if (qXindex < 0 || qXindex >= nX ||
-		      qYindex < 0 || qYindex >= nY)
-		    continue;
-		  
-		  int binIndex=qXindex+nX*qYindex;
-		  auto& row = segments[rank].rows[binIndex];
-
-		  // sum duplicate entries
-		  if (!row.empty() && row.back().col==pixel_index)
-		    {
-		      row.back().value+=
-			1.0f / (n_splitting * n_splitting);
-                    }
-		  else
-		    {
-		      row.emplace_back(pixel_index,
-				       1.0f/(n_splitting*n_splitting));
-		    }
-		}
-	    }
-	}
-    }
-  return;
-}
-
 void generate_matrix(const Poni& poni,
                      const py::array_t<float>& pixel_corners,
                      int n_splitting, 
@@ -212,12 +97,10 @@ void generate_matrix(const Poni& poni,
     // B C
     auto pc = pixel_corners.unchecked<4>();
     auto shape = pixel_corners.shape();
-
-#pragma omp parallel for schedule(static)
     
+    #pragma omp parallel for schedule(static)
     for (int i=0; i<shape[0]; i++) {
-      int rank = omp_get_thread_num();
-
+        int rank = omp_get_thread_num();
         for (int j=0; j<shape[1]; j++) {
             int pixel_index = i*shape[1] + j;
             if (mask[pixel_index]) {
@@ -250,7 +133,7 @@ void generate_matrix(const Poni& poni,
                     
                     float r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
                     float tth = atan2f(r, pos[2]);
-		    
+                    
                     float radial_coord = 0.0f; 
                     switch(output_unit) {
                         case Unit::q:
@@ -302,114 +185,68 @@ void generate_matrix(const Poni& poni,
     }
 }
 
-Sparse::Sparse
-(
- py::object py_poni,
- py::array_t<float> pixel_corners,
- int n_splitting, 
- py::array_t<int8_t> mask,
- py::array_t<float, py::array::c_style | py::array::forcecast> qxBins,
- py::array_t<float, py::array::c_style | py::array::forcecast> qyBins
- )
-{    
-
-  Poni poni;
-  poni.dist = py_poni.attr("dist").cast<float>();
-  poni.poni1 = py_poni.attr("poni1").cast<float>();
-  poni.poni2 = py_poni.attr("poni2").cast<float>();
-  poni.rot1 = py_poni.attr("rot1").cast<float>();
-  poni.rot2 = py_poni.attr("rot2").cast<float>();
-  poni.rot3 = py_poni.attr("rot3").cast<float>();
-  poni.wavelength = py_poni.attr("wavelength").cast<float>();
-
-  int max_threads = omp_get_max_threads();
-
-
-  std::vector<RListMatrix> segments;
-  int nX = qxBins.size() - 1;
-  int nY = qyBins.size() - 1;
-  int nRows= nX*nY;
-  std::cout<<"size == "<<max_threads<<" "<<nRows<<std::endl;
-  segments.resize(max_threads, nRows);
-  std::cout<<"MAx == "<<max_threads<<std::endl;
-  generateQXQYMatrix(poni,
-		     pixel_corners, 
-		     n_splitting, 
-		     segments, 
-		     mask.data(),
-		     nX,qxBins.data(),
-		     nY,qyBins.data());
-    
-  tocsr(segments,nRows,col_idx,row_ptr,values);
-}
-
 Sparse::Sparse(py::object py_poni,
                py::array_t<float> pixel_corners,
                int n_splitting, 
                py::array_t<int8_t> mask,
                const std::string& unit,
-               py::array_t<float, py::array::c_style | py::array::forcecast>
-	       radial_bins,
-               std::optional<py::array_t<float, py::array::c_style |
-	       py::array::forcecast> > phi_bins)
+               py::array_t<float, py::array::c_style | py::array::forcecast> radial_bins,
+               std::optional<py::array_t<float, py::array::c_style | py::array::forcecast> > phi_bins)
 {
-  Poni poni;
-  poni.dist = py_poni.attr("dist").cast<float>();
-  poni.poni1 = py_poni.attr("poni1").cast<float>();
-  poni.poni2 = py_poni.attr("poni2").cast<float>();
-  poni.rot1 = py_poni.attr("rot1").cast<float>();
-  poni.rot2 = py_poni.attr("rot2").cast<float>();
-  poni.rot3 = py_poni.attr("rot3").cast<float>();
-  poni.wavelength = py_poni.attr("wavelength").cast<float>();
-  
-  Unit output_unit;
-  if (unit == "q") {
-    output_unit = Unit::q;
-  }
-  else {
-    output_unit = Unit::tth;
-  }
-
-  int max_threads =  omp_get_max_threads();
-
-  std::vector<RListMatrix> segments;
-  int nradial_bins = radial_bins.size() - 1;
-  
-  int nrows, nphi_bins;
-  float* phi_data;
-  // 1D integration
-  if (!phi_bins.has_value()) {
-    nrows = nradial_bins;
-    nphi_bins = 0;
-    phi_data = nullptr;
-  }
-  // 2D integration
-  else {
-    nphi_bins = phi_bins.value().size() - 1;
-    nrows = nphi_bins * nradial_bins;
-    phi_data = phi_bins.value().mutable_data();
-  }
-
-  segments.resize(max_threads, nrows);
-  std::cout<<"Tread SIZE / Rows == "<<max_threads<<" "<<nrows<<std::endl;  
-  generate_matrix(poni, 
-		  pixel_corners, 
-		  n_splitting, 
-		  segments, 
-		  mask.data(),
-		  output_unit,
-		  nradial_bins, radial_bins.data(),
-		  nphi_bins, phi_data);
-  
-  tocsr(segments, nrows, col_idx, row_ptr, values);
+    Poni poni;
+    poni.dist = py_poni.attr("dist").cast<float>();
+    poni.poni1 = py_poni.attr("poni1").cast<float>();
+    poni.poni2 = py_poni.attr("poni2").cast<float>();
+    poni.rot1 = py_poni.attr("rot1").cast<float>();
+    poni.rot2 = py_poni.attr("rot2").cast<float>();
+    poni.rot3 = py_poni.attr("rot3").cast<float>();
+    poni.wavelength = py_poni.attr("wavelength").cast<float>();
+    
+    Unit output_unit;
+    if (unit == "q") {
+        output_unit = Unit::q;
+    }
+    else {
+        output_unit = Unit::tth;
+    }
+    
+    int max_threads = omp_get_max_threads();
+    std::vector<RListMatrix> segments;
+    int nradial_bins = radial_bins.size() - 1;
+    
+    int nrows, nphi_bins;
+    float* phi_data;
+    // 1D integration
+    if (!phi_bins.has_value()) {
+        nrows = nradial_bins;
+        nphi_bins = 0;
+        phi_data = nullptr;
+    }
+    // 2D integration
+    else {
+        nphi_bins = phi_bins.value().size() - 1;
+        nrows = nphi_bins * nradial_bins;
+        phi_data = phi_bins.value().mutable_data();
+    }
+    
+    segments.resize(max_threads, nrows);
+    generate_matrix(poni, 
+                    pixel_corners, 
+                    n_splitting, 
+                    segments, 
+                    mask.data(),
+                    output_unit,
+                    nradial_bins, radial_bins.data(),
+                    nphi_bins, phi_data);
+    
+    tocsr(segments, nrows, col_idx, row_ptr, values);
 }
 
 Sparse::Sparse(std::vector<int>&& c,
                std::vector<int>&& r,
                std::vector<float>&& v,
                std::vector<float>&& vc,
-               std::vector<float>&& vc2) :
-  col_idx(c), row_ptr(r), values(v), values_corrected(vc), values_corrected2(vc2)
+               std::vector<float>&& vc2) : col_idx(c), row_ptr(r), values(v), values_corrected(vc), values_corrected2(vc2)
 {
 }
 
@@ -511,7 +348,6 @@ py::array_t<float> Sparse::spmv_corrected2(py::array x)
 PYBIND11_MODULE(_azint, m) {
     py::class_<Sparse>(m, "Sparse")
         .def(py::init<py::object, py::array_t<float>, int, py::array_t<int8_t>, std::string, py::array_t<float>, std::optional<py::array_t<float> > >())
-        .def(py::init<py::object, py::array_t<float>, int, py::array_t<int8_t>, py::array_t<float>, py::array_t<float> >())
         .def("set_correction", &Sparse::set_correction)
         .def("spmv", &Sparse::spmv)
         .def("spmv_corrected", &Sparse::spmv_corrected)

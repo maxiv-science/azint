@@ -82,19 +82,18 @@ def transform(poni, p1, p2, p3):
     phi = np.arctan2(pos[0], pos[1])
     return tth, phi
 
+
 def setup_radial_bins(poni, radial_bins, unit, tth):
     if unit == 'q':
         # calculate auto range min/max radial bins
         if not isinstance(radial_bins, Iterable):
             # q = 4pi/lambda sin( 2theta / 2 ) in A-1
-            print('theta = ',tth)
             q = 4.0e-10 * np.pi / poni.wavelength * np.sin(0.5*tth)
             radial_bins = np.linspace(np.amin(q), np.amax(q), radial_bins+1)
         else:
             radial_bins = np.asarray(radial_bins)
                 
     elif unit == '2th':
-        print('YY: ',tth)
         # radial bins in 2th are in deg
         if not isinstance(radial_bins, Iterable):
             radial_bins = np.rad2deg(np.linspace(np.amin(tth), np.amax(tth), radial_bins+1))
@@ -104,35 +103,18 @@ def setup_radial_bins(poni, radial_bins, unit, tth):
     return radial_bins
     
     
-def setup_azimuth_bins(azimuth_bins,unit=None):
-
+def setup_azimuth_bins(azimuth_bins):
     if azimuth_bins is None:
         return None
-    print('AZA == ',azimuth_bins)
+    
     if not isinstance(azimuth_bins, Iterable):
         azimuth_bins = np.linspace(0, 360, azimuth_bins+1)
     else:
         azimuth_bins = np.asarray(azimuth_bins)
     return azimuth_bins
 
-def calcQXQYbins(poni,qxqy,tth,phi):
-
-    if qxqy is None or qxqy<1:
-        return None,None
-
-    print('QX/QY bins == ',qxqy)
-
-    ## This is 3(?) values:
-    q = 4.0e-10 * np.pi / poni.wavelength * np.sin(0.5*tth)
-    qmin=np.amin(q)
-    qmax=np.amax(q)
-    
-    qx=np.linspace(-qmax,qmax,qxqy+1)
-    qy=np.linspace(-qmax,qmax,qxqy+1)
-    return qx,qy
     
 def setup_corrections(poni, solid_angle, polarization_factor, p1, p2, tth, phi):
-    ## Build all the corrections assuming
     corrections = np.ones(p1.size, dtype=np.float32)
     if solid_angle:
         solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
@@ -159,8 +141,7 @@ class AzimuthalIntegrator():
                  mask: np.ndarray = None, 
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
-                 error_model: Optional[str] = None,
-                 qxqy: Optional[Union[int,Sequence]] = None):
+                 error_model: Optional[str] = None):
         """
         Args:
             poni: Name of Poni file or instance of Poni
@@ -202,10 +183,6 @@ class AzimuthalIntegrator():
         self.radial_axis = 0.5*(radial_bins[1:] + radial_bins[:-1])
         azimuth_bins = setup_azimuth_bins(azimuth_bins)
         self.azimuth_axis = 0.5*(azimuth_bins[1:] + azimuth_bins[:-1]) if azimuth_bins is not None else None
-
-        qxBins,qyBins = calcQXQYbins(poni,qxqy,tth,phi)
-        self.qxBins=qxBins
-        self.qyBins=qyBins
         
         shape = pixel_centers.shape[:2]
         self.input_size = np.prod(shape)
@@ -219,30 +196,15 @@ class AzimuthalIntegrator():
         
         self.sparse_matrix = Sparse(poni, poni.det.pixel_corners, n_splitting, 
                                     mask, unit, radial_bins, azimuth_bins)
-            
         self.norm = self.sparse_matrix.spmv(np.ones(shape[0]*shape[1], dtype=np.float32))
         corrections = setup_corrections(poni, solid_angle, polarization_factor, p1, p2, tth, phi)
         self.sparse_matrix.set_correction(corrections)
-
-        self.qxqy_shape = None
-        self.qxqy = None
-        if (qxqy):
-            self.qxqy=qxqy
-            self.qxqy_shape = [len(qxBins) - 1, len(qyBins) - 1]
-            self.sparseQXQY = Sparse(poni,
-                                     poni.det.pixel_corners,
-                                     n_splitting,
-                                     mask,
-                                     qxBins,
-                                     qyBins)
-            self.sparseQXQY.set_correction(corrections)
         
         
     def integrate(self, 
                   img: np.ndarray, 
                   mask: Optional[np.ndarray] = None,
-                  normalized: Optional[bool] = True) -> tuple[np.ndarray, np.ndarray,
-                                                              Optional[np.ndarray],Optional[np.ndarray]]:
+                  normalized: Optional[bool] = True) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
         """
         Calculates the azimuthal integration of the input image
         
@@ -258,7 +220,7 @@ class AzimuthalIntegrator():
             the norm if normalized is False
         """
         img = np.ascontiguousarray(img)
-
+        
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
         if mask is None:
@@ -267,32 +229,20 @@ class AzimuthalIntegrator():
             inverted_mask = 1 - mask
             img = img*inverted_mask
             norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1))
-            
+                
         signal = self.sparse_matrix.spmv_corrected(img).reshape(self.output_shape)
+        norm = norm.reshape(self.output_shape)
         
-        outQXQY=None
-        if (self.qxqy):
-            normQXQY = self.sparseQXQY.spmv(inverted_mask.reshape(-1))
-            normQXQY=normQXQY.reshape(self.qxqy_shape)
-            qxqySignal=self.sparseQXQY.spmv_corrected(img). \
-              reshape(self.qxqy_shape)
-            outQXQY=np.divide(qxqySignal, normQXQY,
-                              out=np.zeros_like(qxqySignal),
-                              where=normQXQY!=0.0)
-##            print('Sum == ',np.sum(outQXQY))
-            
-        norm = norm.reshape(self.output_shape)        
         errors = None
         if self.error_model:
             # poisson error model
             errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
             if normalized:
                 errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
-
-
+        
         if normalized:
             result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-            return result, errors, outQXQY
+            return result, errors
         else:
-            return signal, errors, norm, outQXQY
+            return signal, errors, norm
         
