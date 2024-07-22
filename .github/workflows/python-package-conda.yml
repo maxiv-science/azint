@@ -74,12 +74,9 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - uses: ./
-        id: setup-miniconda
-        continue-on-error: true
-        with:
-          miniconda-version: latest
-          miniforge-version: latest
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        miniforge-version: latest
     - name: Install conda-build
       shell: bash -l {0}
       run: conda install conda-build setuptools_scm boa git
