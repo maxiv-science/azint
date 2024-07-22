@@ -18,7 +18,7 @@ jobs:
         miniforge-version: latest
     - name: Install conda-build
       shell: bash -l {0}
-      run: conda install conda-build setuptools_scm boa
+      run: conda install conda-build setuptools_scm boa git
     - name: build package
       shell: bash -l {0}
       run: |
