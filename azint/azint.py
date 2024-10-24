@@ -36,6 +36,8 @@ class Poni:
                 
         det_name = config['detector']
         det_config = json.loads(config['detector_config'])
+        if "orientation" in config['detector_config']:
+            det_config.pop("orientation", None)
         det = Detector.factory(det_name, det_config)
         return cls(det, 
                    float(config['distance']), 
