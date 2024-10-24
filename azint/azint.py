@@ -48,6 +48,23 @@ class Poni:
                    float(config['rot3']),
                    float(config['wavelength']))
     
+    @classmethod
+    def from_dict(cls, config):
+        det_name = config['detector']
+        det_config = {}
+        if 'detector_config' in config:
+            det_config = json.loads(config['detector_config'])
+            if "orientation" in config['detector_config']:
+                det_config.pop("orientation", None)
+        det = Detector.factory(det_name, det_config)
+        return cls(det, 
+                   float(config['distance']), 
+                   float(config['poni1']), 
+                   float(config['poni2']), 
+                   float(config['rot1']), 
+                   float(config['rot2']),
+                   float(config['rot3']),
+                   float(config['wavelength']))
 
 def rotation_matrix(poni: Poni):
     cos_rot1 = np.cos(poni.rot1)
@@ -171,6 +188,9 @@ class AzimuthalIntegrator():
         
         if isinstance(poni, str):
             poni = Poni.from_file(poni)
+        
+        if isinstance(poni, dict):
+            poni = Poni.from_dict(poni)
         
         self.unit = unit
         self.error_model = error_model
