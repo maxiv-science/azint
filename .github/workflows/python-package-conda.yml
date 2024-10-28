@@ -49,7 +49,7 @@ jobs:
       with:
         # needs to be unique for each matrix entry
         artifact-name: azint-win64
-        build-args: --target-platform win-64
+        build-args: --target-platform win-64 --recipe-path conda-recipe/meta.yaml
 
     - uses: actions/upload-artifact@v3
       with:
