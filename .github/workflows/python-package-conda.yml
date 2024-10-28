@@ -5,7 +5,7 @@ on: [push]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30  # Increased timeout limit
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -17,23 +17,16 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         miniforge-version: latest
-        channels: conda-forge
-        auto-update-conda: true
-    - name: Install build dependencies
+    - name: Install conda-build
       shell: bash -l {0}
-      run: |
-        conda install conda-build setuptools_scm boa git compilers
-        pip install wheel build
-    - name: Set environment variables for compilers
-      shell: bash -l {0}
-      run: |
-        export CXXFLAGS="-std=c++11" # Adjust flags as necessary for your project
+      run: conda install conda-build setuptools_scm boa git
     - name: build package
       shell: bash -l {0}
       run: |
         export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: $SETUPTOOLS_SCM_PRETEND_VERSION"
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE --no-anaconda-upload --debug
+        echo "Version: "
+        echo $SETUPTOOLS_SCM_PRETEND_VERSION
+        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
@@ -41,30 +34,25 @@ jobs:
 
   build-win:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 30  # Increased timeout limit
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - name: Setup MSVC Compiler
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x64
+    - uses: ilammy/msvc-dev-cmd@v1
     - uses: conda-incubator/setup-miniconda@v2
       with:
         miniforge-version: latest
-        channels: conda-forge
-        auto-update-conda: true
-    - name: Install build dependencies
-      run: |
-        conda install conda-build setuptools_scm boa git compilers
-        pip install wheel build
+    - name: Install conda-build
+      shell: pwsh  # Use PowerShell shell
+      run: conda install conda-build setuptools_scm boa git
     - name: build package
+      shell: pwsh
       run: |
-        export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: $SETUPTOOLS_SCM_PRETEND_VERSION"
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE --no-anaconda-upload --debug
+        $env:SETUPTOOLS_SCM_PRETEND_VERSION = $(python -m setuptools_scm)
+        Write-Host "Version: $env:SETUPTOOLS_SCM_PRETEND_VERSION"
+        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
@@ -72,7 +60,7 @@ jobs:
 
   build-mac-arm:
     runs-on: macos-14
-    timeout-minutes: 15
+    timeout-minutes: 30  # Increased timeout limit
 
     steps:
     - uses: actions/checkout@v3
@@ -81,19 +69,16 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v3
       with:
         miniforge-version: latest
-        channels: conda-forge
-        auto-update-conda: true
-    - name: Install build dependencies
+    - name: Install conda-build
       shell: bash -l {0}
-      run: |
-        conda install conda-build setuptools_scm boa git compilers
-        pip install wheel build
+      run: conda install conda-build setuptools_scm boa git
     - name: build package
       shell: bash -l {0}
       run: |
         export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: $SETUPTOOLS_SCM_PRETEND_VERSION"
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE --no-anaconda-upload --debug
+        echo "Version: "
+        echo $SETUPTOOLS_SCM_PRETEND_VERSION
+        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
