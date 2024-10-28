@@ -5,7 +5,7 @@ on: [push]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30  # Increased timeout limit
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -26,18 +26,15 @@ jobs:
         export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
         echo "Version: "
         echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+        conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
         path: ${{ github.workspace }}/**/azint*.bz2
 
   build-win:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        os: [windows-latest]
+    runs-on: windows-latest
+    timeout-minutes: 30  # Increased timeout limit
 
     steps:
     - uses: actions/checkout@v3
@@ -48,27 +45,22 @@ jobs:
       with:
         miniforge-version: latest
     - name: Install conda-build
-      shell: bash -l {0}
+      shell: pwsh  # Use PowerShell shell
       run: conda install conda-build setuptools_scm boa git
     - name: build package
-      shell: bash -l {0}
+      shell: pwsh
       run: |
-        rm /usr/bin/link
-        export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: "
-        echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+        $env:SETUPTOOLS_SCM_PRETEND_VERSION = $(python -m setuptools_scm)
+        Write-Host "Version: $env:SETUPTOOLS_SCM_PRETEND_VERSION"
+        conda mambabuild "$env:GITHUB_WORKSPACE/conda-recipe" --output-folder="$env:GITHUB_WORKSPACE"
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
         path: ${{ github.workspace }}/**/azint*.bz2
 
   build-mac-arm:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        os: [macos-14]
+    runs-on: macos-14
+    timeout-minutes: 30  # Increased timeout limit
 
     steps:
     - uses: actions/checkout@v3
@@ -86,7 +78,7 @@ jobs:
         export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
         echo "Version: "
         echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+        conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
