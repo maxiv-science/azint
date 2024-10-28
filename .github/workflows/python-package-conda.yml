@@ -44,20 +44,13 @@ jobs:
       with:
         fetch-depth: 0
     - uses: ilammy/msvc-dev-cmd@v1
-    - uses: conda-incubator/setup-miniconda@v2
+    - name: Build conda package
+      uses: prefix-dev/rattler-build-action@v0.2.18
       with:
-        miniforge-version: latest
-    - name: Install conda-build
-      shell: bash -l {0}
-      run: conda install conda-build setuptools_scm boa git
-    - name: build package
-      shell: bash -l {0}
-      run: |
-        rm /usr/bin/link
-        export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: "
-        echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda mambabuild $GITHUB_WORKSPACE --output-folder=$GITHUB_WORKSPACE
+        # needs to be unique for each matrix entry
+        artifact-name: azint-win64
+        build-args: --target-platform win-64
+
     - uses: actions/upload-artifact@v3
       with:
         name: package-${{ github.sha }}
