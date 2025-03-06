@@ -29,7 +29,7 @@ jobs:
         conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
     - uses: actions/upload-artifact@v4
       with:
-        name: package-${{ github.run_id }}-${{ github.job }}
+        name: package-${{ github.run_id }}-${{ github.job }}-${{ matrix.os }}
         path: ${{ github.workspace }}/**/azint*.bz2
 
   build-win:
