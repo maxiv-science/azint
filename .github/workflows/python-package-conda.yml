@@ -27,7 +27,7 @@ jobs:
         echo "Version: "
         echo $SETUPTOOLS_SCM_PRETEND_VERSION
         conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: package-${{ github.sha }}
         path: ${{ github.workspace }}/**/azint*.bz2
@@ -53,7 +53,7 @@ jobs:
         $env:SETUPTOOLS_SCM_PRETEND_VERSION = $(python -m setuptools_scm)
         Write-Host "Version: $env:SETUPTOOLS_SCM_PRETEND_VERSION"
         conda mambabuild "$env:GITHUB_WORKSPACE/conda-recipe" --output-folder="$env:GITHUB_WORKSPACE"
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: package-${{ github.sha }}
         path: ${{ github.workspace }}/**/azint*.bz2
@@ -79,7 +79,7 @@ jobs:
         echo "Version: "
         echo $SETUPTOOLS_SCM_PRETEND_VERSION
         conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: package-${{ github.sha }}
         path: ${{ github.workspace }}/**/azint*.bz2
