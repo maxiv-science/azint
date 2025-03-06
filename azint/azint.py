@@ -179,6 +179,13 @@ class AzimuthalIntegrator():
             radial_axis (ndarray): radial axis depeding on units in q or 2theta
             azimuth_axis (ndarray, optional): azimuth axis in degrees is case of 2D integration
         """
+        self.poni = poni
+        self.n_splitting = n_splitting
+        self.radial_bins = radial_bins
+        self.azimuth_bins = azimuth_bins
+        self.mask = mask
+        self.solid_angle = solid_angle
+        self.polarization_factor = polarization_factor
         
         if error_model and error_model != 'poisson':
             raise RuntimeError('Only poisson error model is supported')
