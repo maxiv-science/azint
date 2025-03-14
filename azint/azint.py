@@ -6,6 +6,7 @@ from collections.abc import Sequence, Iterable
 import numpy as np
 from .detector import Detector
 from _azint import Sparse
+import fabio
 
 
 __all__ = ['Poni', 'AzimuthalIntegrator']

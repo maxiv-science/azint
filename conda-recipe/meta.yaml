@@ -15,6 +15,7 @@ requirements:
   host:
     - python
     - numpy
+    - fabio
     - pybind11
     - setuptools_scm
     
