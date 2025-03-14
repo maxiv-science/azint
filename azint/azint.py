@@ -157,7 +157,7 @@ class AzimuthalIntegrator():
                  radial_bins: Union[int, Sequence],
                  azimuth_bins: Optional[Union[int, Sequence]] = None,
                  unit: str = 'q',
-                 mask: np.ndarray = None, 
+                 mask: Optional[Union[np.ndarray, str]] = None,
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
                  error_model: Optional[str] = None):
@@ -183,10 +183,21 @@ class AzimuthalIntegrator():
         self.n_splitting = n_splitting
         self.radial_bins = radial_bins
         self.azimuth_bins = azimuth_bins
-        self.mask = mask
         self.solid_angle = solid_angle
         self.polarization_factor = polarization_factor
-        
+        self.mask_path = ''
+        if not isinstance(mask, np.ndarray):
+            if mask == '':
+                mask = None
+            else:
+                fname = mask
+                self.mask_path = fname
+                ending = os.path.splitext(fname)[1]
+                if ending == '.npy':
+                    mask = np.load(fname)
+                else:
+                    mask = fabio.open(fname).data
+        self.mask = mask
         if error_model and error_model != 'poisson':
             raise RuntimeError('Only poisson error model is supported')
         
@@ -232,7 +243,6 @@ class AzimuthalIntegrator():
         
     def integrate(self, 
                   img: np.ndarray, 
-                  mask: Optional[np.ndarray] = None,
                   normalized: Optional[bool] = True) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
         """
         Calculates the azimuthal integration of the input image
@@ -252,10 +262,10 @@ class AzimuthalIntegrator():
         
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
-        if mask is None:
+        if self.mask is None:
             norm = self.norm
         else:
-            inverted_mask = 1 - mask
+            inverted_mask = 1 - self.mask
             img = img*inverted_mask
             norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1))
                 
