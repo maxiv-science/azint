@@ -188,16 +188,17 @@ class AzimuthalIntegrator():
         self.polarization_factor = polarization_factor
         self.mask_path = ''
         if not isinstance(mask, np.ndarray):
-            if mask == '':
-                mask = None
-            else:
-                fname = mask
-                self.mask_path = fname
-                ending = os.path.splitext(fname)[1]
-                if ending == '.npy':
-                    mask = np.load(fname)
+            if mask is not None:
+                if mask == '':
+                    mask = None
                 else:
-                    mask = fabio.open(fname).data
+                    fname = mask
+                    self.mask_path = fname
+                    ending = os.path.splitext(fname)[1]
+                    if ending == '.npy':
+                        mask = np.load(fname)
+                    else:
+                        mask = fabio.open(fname).data
         self.mask = mask
         if error_model and error_model != 'poisson':
             raise RuntimeError('Only poisson error model is supported')
