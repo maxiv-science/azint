@@ -244,21 +244,26 @@ class AzimuthalIntegrator():
         
         
     def integrate(self, 
-                  img: np.ndarray, 
-                  normalized: Optional[bool] = True) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+                  img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """
-        Calculates the azimuthal integration of the input image
-        
+        Performs azimuthal integration on the input image.
+
+        This function computes the azimuthally averaged intensity from the input image
+        using a sparse matrix-based integration approach. Optionally applies a mask
+        and computes error estimates if an error model is defined.
+
         Args:
-            img: Input image to be integrated
-            mask: Optional pixel mask to exclude bad pixels. Note if mask is constant using the mask argument in
-                the constructor is more efficient
-            normalized: Whether to return the normalized result or the integrated signal and norm separately
-        
+            img (ndarray): Input image to be integrated. Must match expected input size.
+
         Returns:
-            azimuthal integrated image or just integrated signal if normalized is True
-            standard error of the mean (SEM) when error_model is specified else None
-            the norm if normalized is False
+            tuple:
+                - I (ndarray): 1D azimuthally integrated intensity.
+                - errors_1d (ndarray or None): Standard error of the mean (SEM) for 1D integration if error model is specified, else None.
+                - I_2d (None): 2D "cake" integration result.
+                - errors_2d (None): 2D error result.
+
+        Raises:
+            RuntimeError: If the input image size does not match the expected size.
         """
         img = np.ascontiguousarray(img)
         
@@ -278,12 +283,18 @@ class AzimuthalIntegrator():
         if self.error_model:
             # poisson error model
             errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
-            if normalized:
-                errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
+            errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
         
-        if normalized:
-            result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-            return result, errors
-        else:
-            return signal, errors, norm
-        
+        result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
+        if result.ndim == 1: # must be radial bins only, no eta, ie 1d.
+            I = result
+            if errors is not None:
+                errors_1d = errors
+            return I, errors_1d, None, None
+        else:  # will have eta bins
+            I = np.sum(result, axis=0)
+            I_2d = result
+            if errors is not None:
+                errors_1d = np.sum(errors, axis=0)
+                errors_2d = errors
+            return I, errors_1d, I_2d, errors_2d
