@@ -161,24 +161,26 @@ class AzimuthalIntegrator():
                  mask: Optional[Union[np.ndarray, str]] = None,
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
+                 normalized: Optional[bool] = True,
                  error_model: Optional[str] = None):
         """
-        Args:
-            poni: Name of Poni file or instance of Poni
-            n_splitting: Each pixel in the image gets split into (n, n) subpixels that get binned individually
-            radial_bins: radial bins can either be number of bins or a sequence defining the bin edges in Angstrom^-1.
-            azimuth_bins: azimthual bins can either be number of bins or a sequence defining the bin edges between [0, 360] degrees.
-            unit: Ouput units for the radial coordindate
-            mask: Pixel mask to exclude bad pixels. Pixels marked with 1 will be excluded
-            solid_angle: Perform solid angle correction
-            polarization_factor: Polarization factor for the polarization correction
-                1 (linear horizontal polarization)
-                -1 (linear vertical polarization)
-            error_model: Error model used to calculate errors in the transformation. Only options is 'poisson' error model
-            
+        Initializes the integration settings for a 1D or 2D azimuthal integration.
+
         Attributes:
-            radial_axis (ndarray): radial axis depeding on units in q or 2theta
-            azimuth_axis (ndarray, optional): azimuth axis in degrees is case of 2D integration
+            poni (str or dict or Poni): Path to a PONI file or a Poni instance or a dictionary that defines the detector geometry.
+            n_splitting (int): Number of subpixels per dimension for pixel splitting. Each image pixel is split into (n_splitting x n_splitting) subpixels.
+            radial_bins (int or Sequence): Number of radial bins or an explicit sequence of radial bin edges (e.g., in Å⁻¹ or degrees).
+            azimuth_bins (int or Sequence, optional): Number of azimuthal bins or a sequence of azimuthal bin edges (in degrees from 0 to 360). Required for 2D integration.
+            unit (str): Unit for the radial axis. Typically 'q' (Å⁻¹) or '2theta' (degrees).
+            mask (ndarray or str, optional): Mask array or path to mask file. Pixels marked with 1 will be excluded from the integration.
+            solid_angle (bool): If True, applies solid angle correction.
+            polarization_factor (float, optional): Polarization correction factor.
+                Use 1 for horizontal polarization, -1 for vertical polarization.
+            normalized (bool, optional): If True, the output will be normalized by the number of contributing pixels.
+            error_model (str, optional): Error model used to propagate uncertainties. Currently, only 'poisson' is supported.
+
+            radial_axis (ndarray): Array of radial coordinates in the specified unit ('q' or '2theta').
+            azimuth_axis (ndarray, optional): Array of azimuthal coordinates in degrees, present if performing 2D integration.
         """
         self.poni = poni
         self.n_splitting = n_splitting
@@ -186,6 +188,7 @@ class AzimuthalIntegrator():
         self.azimuth_bins = azimuth_bins
         self.solid_angle = solid_angle
         self.polarization_factor = polarization_factor
+        self.normalized = normalized
         self.mask_path = ''
         if not isinstance(mask, np.ndarray):
             if mask is not None:
@@ -283,9 +286,12 @@ class AzimuthalIntegrator():
         if self.error_model:
             # poisson error model
             errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
-            errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
+            if self.normalized:
+                errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
         
-        result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
+        result = signal
+        if self.normalized:
+            result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
         if result.ndim == 1: # must be radial bins only, no eta, ie 1d.
             self.norm_1d = norm
             self.norm_2d = None
