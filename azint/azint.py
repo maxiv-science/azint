@@ -287,12 +287,16 @@ class AzimuthalIntegrator():
         
         result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
         if result.ndim == 1: # must be radial bins only, no eta, ie 1d.
+            self.norm_1d = norm
+            self.norm_2d = None
             I = result
             if errors is not None:
                 errors_1d = errors
             return I, errors_1d, None, None
         else:  # will have eta bins
             I = np.sum(result, axis=0)
+            self.norm_1d = np.sum(norm, axis=0)
+            self.norm_2d = norm
             I_2d = result
             if errors is not None:
                 errors_1d = np.sum(errors, axis=0)
