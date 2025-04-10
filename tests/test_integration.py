@@ -10,14 +10,14 @@ def safe_divide(a, b):
 def test1d():
     ai = AzimuthalIntegrator(poni_file, 4, 1000, solid_angle=False) 
     I, error_1d, _, _ = ai.integrate(img)
-    assert(np.allclose(res, 1.0))
+    assert(np.allclose(I, 1.0))
     
     ai = AzimuthalIntegrator(poni_file, 1, 1000, error_model='poisson', solid_angle=False) 
     I, error_1d, _, _ = ai.integrate(img)
-    assert(np.allclose(res, 1.0))
+    assert(np.allclose(I, 1.0))
     
 def test2d():
-    ai = AzimuthalIntegrator(poni_file, 4, 1000, 360, solid_angle=False) 
+    ai = AzimuthalIntegrator(poni_file, 4, 1000, 360, solid_angle=False, normalized=False) 
     I, error_1d, I_2d, error_2d = ai.integrate(img)
     projection = safe_divide(np.sum(I_2d, axis=0), np.sum(ai.norm_2d, axis=0))
     assert(np.allclose(projection, 1.0))
