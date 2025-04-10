@@ -18,7 +18,7 @@ def test1d():
     
 def test2d():
     ai = AzimuthalIntegrator(poni_file, 4, 1000, 360, solid_angle=False) 
-    res, _, norm = ai.integrate(img, normalized=False)
+    res, _, norm = ai.integrate(img)
     projection = save_divide(np.sum(res, axis=0), np.sum(norm, axis=0))
     assert(np.allclose(projection, 1.0))
     
