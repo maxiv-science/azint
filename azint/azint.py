@@ -161,7 +161,7 @@ class AzimuthalIntegrator():
                  mask: Optional[Union[np.ndarray, str]] = None,
                  solid_angle: bool = True,
                  polarization_factor: Optional[float] = None,
-                 normalized: Optional[bool] = True,
+                 normalized: bool = True,
                  error_model: Optional[str] = None):
         """
         Initializes the integration settings for a 1D or 2D azimuthal integration.
@@ -283,6 +283,8 @@ class AzimuthalIntegrator():
         norm = norm.reshape(self.output_shape)
         
         errors = None
+        errors_1d = None
+        errors_2d = None
         if self.error_model:
             # poisson error model
             errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
