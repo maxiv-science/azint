@@ -291,22 +291,28 @@ class AzimuthalIntegrator():
             if self.normalized:
                 errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
         
-        result = signal
-        if self.normalized:
-            result = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-        if result.ndim == 1: # must be radial bins only, no eta, ie 1d.
+        if signal.ndim == 1: # must be radial bins only, no eta, ie 1d.
+            if self.normalized:
+                signal = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
             self.norm_1d = norm
             self.norm_2d = None
-            I = result
+            I = signal
             if errors is not None:
                 errors_1d = errors
             return I, errors_1d, None, None
         else:  # will have eta bins
-            I = np.sum(result, axis=0)
+            signal_1d =  np.sum(signal, axis=0)
             self.norm_1d = np.sum(norm, axis=0)
+            if self.normalized:
+                signal_1d = np.divide(signal_1d, self.norm_1d, out=np.zeros_like(signal_1d), where=self.norm_1d!=0.0)
+                signal = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
+            I = signal_1d
             self.norm_2d = norm
-            I_2d = result
+            I_2d = signal
             if errors is not None:
                 errors_1d = np.sum(errors, axis=0)
                 errors_2d = errors
+                if self.normalized:
+                    errors_1d = np.divide(errors_1d, self.norm_1d, out=np.zeros_like(errors_1d), where=self.norm_1d!=0.0)
+                    errors_2d = np.divide(errors_2d, norm, out=np.zeros_like(errors_2d), where=norm!=0.0)
             return I, errors_1d, I_2d, errors_2d
