@@ -11,3 +11,7 @@ azint is a python library for azimuthal integration of area detectors. The azimu
 ``` bash
 conda install -c maxiv azint
 ```
+
+---
+## NXazint Output
+To write integration results in the [NeXus](https://www.nexusformat.org/) format, you can use the [azint_writer](https://github.com/maxiv-science/azint_writer) package together with azint.
