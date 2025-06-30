@@ -137,10 +137,8 @@ def setup_azimuth_bins(azimuth_bins):
 def setup_corrections(poni, solid_angle, polarization_factor, p1, p2, tth, phi):
     corrections = np.ones(p1.size, dtype=np.float32)
     if solid_angle:
-        solid_angle = poni.dist * poni.det.pixel1 * poni.det.pixel2 / (poni.dist**2 + p1*p1 + p2*p2)**3.
+        solid_angle = poni.dist * poni.det.pixel1 * poni.det.pixel2 / (poni.dist**2 + p1*p1 + p2*p2)**(3./2.)
         corrections *= (solid_angle).reshape(-1)
-        # solid_angle = poni.dist / np.sqrt(poni.dist**2 + p1*p1 + p2*p2)
-        # corrections *= (solid_angle**3).reshape(-1)
             
     if not polarization_factor is None:
         cos2_tth = np.cos(tth) ** 2
