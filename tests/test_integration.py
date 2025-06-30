@@ -1,3 +1,16 @@
+# ===========================================================================================
+# For using azint.py in this repo instead of an installed azint conda package
+# However, select the python interpreter from the azint conda package to fix module imports
+#       ---> REMOVE THE FOLLOWING WHEN FINALIZING MERGE REQUEST TO MASTER BRANCH <---
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+print( f"[DEV LOG]: system path is {sys.path}" )
+import importlib.util
+azint_path = importlib.util.find_spec("azint").origin
+print( f"[DEV LOG]: azint path is {azint_path}" )
+# ===========================================================================================
+
 import numpy as np
 from azint import AzimuthalIntegrator
 
@@ -30,4 +43,3 @@ def test_custom_ranges():
     phi = np.array(phi)
     assert(np.allclose(0.5*(q[1:] + q[:-1]), ai.radial_axis))
     assert(np.allclose(0.5*(phi[1:] + phi[:-1]), ai.azimuth_axis))
-    
