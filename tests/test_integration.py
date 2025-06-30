@@ -43,3 +43,65 @@ def test_custom_ranges():
     phi = np.array(phi)
     assert(np.allclose(0.5*(q[1:] + q[:-1]), ai.radial_axis))
     assert(np.allclose(0.5*(phi[1:] + phi[:-1]), ai.azimuth_axis))
+
+# ===========================================================================================
+# Dev playground with data from:
+#
+# PONI: /data/visitors/danmax/20250946/2025052008/process/setup_Si_135mm/Si_135mm.poni
+# raw: /data/visitors/danmax/20250946/2025052008/raw/Si_135mm/scan-1737_pilatus.h5
+# mask: /data/visitors/danmax/20250946/2025052008/process/hot_px_bs_mask.npy
+# config: /data/visitors/danmax/20250946/2025052008/process/config1.json
+#
+#       ---> REMOVE THE FOLLOWING WHEN FINALIZING MERGE REQUEST TO MASTER BRANCH <---
+import h5py
+import matplotlib.pyplot as plt
+from azint import Poni
+
+h5name = "tests/scan-1737_pilatus.h5"
+h5file = h5py.File(h5name, 'r')
+img    = h5file['/entry/instrument/pilatus/data'][10]
+poni   = 'tests/Si_135mm.poni'
+mask   = 'tests/hot_px_bs_mask.npy'
+
+if isinstance(poni, str):
+    poni_class_instance = Poni.from_file(poni)
+        
+if isinstance(poni, dict):
+    poni_class_instance = Poni.from_dict(poni)
+
+pixel_width  = poni_class_instance.det.pixel1
+pixel_height = poni_class_instance.det.pixel2 
+
+poni_x = poni_class_instance.poni2 / pixel_width  # [m] -> [px]
+poni_y = poni_class_instance.poni1 / pixel_height # [m] -> [px]
+poni_point = ( poni_x, poni_y )
+
+# Some basic plotting ---
+fig, ax = plt.subplots(1,2)
+ax[0].imshow(img, vmin=0, vmax=1200)
+ax[0].plot( poni_x, poni_y, "x", color="tab:orange" )
+
+mask_data = np.load(mask)
+masked_img = img*(1-mask_data) # as done in azint.py
+ax[1].imshow(masked_img, vmin=0, vmax=1200)
+ax[1].plot( poni_x, poni_y, "x", color="tab:orange" )
+
+plt.show()
+
+# Setting up the integrator ---
+config = {
+    'poni': poni,                  # Path to the PONI file
+    'mask': mask,                  # Mask to ignore bad pixels
+    'radial_bins': 3000,           # Number of radial bins for integration
+    'azimuth_bins': 180, # or None # Number of azimuthal bins (for 2D integration)
+    'n_splitting': 21,             # Number of subdivisions per pixel (for precision)
+    'error_model': 'poisson',      # Error propagation model
+    'solid_angle': True,           # Apply solid angle correction
+    'polarization_factor': 0.965,  # Correction for polarization effects
+    'normalized': True,            # Normalize the output intensities
+    'unit': '2th',   # or q        # Output units (e.g., 2θ, q)
+}
+
+ai = AzimuthalIntegrator(**config)
+
+# ===========================================================================================
