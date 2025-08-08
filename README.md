@@ -23,7 +23,12 @@ Install via `conda` from the MAX IV channel:
 
 ```bash
 conda install -c maxiv azint
+```
 
 ---
-## NXazint Output
-To write integration results in the [NeXus](https://www.nexusformat.org/) format, you can use the [azint_writer](https://github.com/maxiv-science/azint_writer) package together with azint.
+## 📤 NXazint Output
+
+To write azimuthal integration results in the [NeXus](https://www.nexusformat.org/) data format,  
+you can use the [`azint_writer`](https://github.com/maxiv-science/azint_writer) package in combination with `azint`.
+
+This enables standardized output for integration results, compatible with NeXus-based data workflows and analysis tools.
