@@ -1,17 +1,34 @@
 # azint: Azimuthal Integration
 
-azint is a python library for azimuthal integration of area detectors. The azimuthal integration is transformed into a sparse matrix vector multiplication for performance. Pixel splitting is done by subdividing each pixels into subpixels and assigning bins and weights for the individual subpixels. This can increase the precision of the transformation but also introduces correlation between neighboring bins.
+[![DOI](https://zenodo.org/badge/315677387.svg)](https://doi.org/10.5281/zenodo.16480726)
 
+**azint** is a Python library for efficient azimuthal integration of area detector data.  
+The integration process is transformed into a sparse matrix–vector multiplication for performance.  
+
+For increased precision, pixel splitting is done by subdividing each pixel into subpixels, assigning bins and weights to each.  
+This improves the accuracy of the transformation but may introduce correlation between neighboring bins.
 
 ---
-**Documentation**: <a href="https://maxiv-science.github.io/azint" target="_blank">https://maxiv-science.github.io/azint</a>
+
+## 📖 Documentation
+
+Full documentation is available at:  
+👉 [https://maxiv-science.github.io/azint](https://maxiv-science.github.io/azint)
 
 ---
-## Installation
-``` bash
+
+## 💾 Installation
+
+Install via `conda` from the MAX IV channel:
+
+```bash
 conda install -c maxiv azint
 ```
 
 ---
-## NXazint Output
-To write integration results in the [NeXus](https://www.nexusformat.org/) format, you can use the [azint_writer](https://github.com/maxiv-science/azint_writer) package together with azint.
+## 📤 NXazint Output
+
+To write azimuthal integration results in the [NeXus](https://www.nexusformat.org/) data format,  
+you can use the [`azint_writer`](https://github.com/maxiv-science/azint_writer) package in combination with `azint`.
+
+This enables standardized output for integration results, compatible with NeXus-based data workflows and analysis tools.
