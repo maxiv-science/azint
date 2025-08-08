@@ -29,36 +29,54 @@ conda install -c maxiv azint
 
 ## Getting started
 azint is using poni files from [pyFAI](https://pyfai.readthedocs.io) to setup the azimuthal integrator
+([link](https://zenodo.org/records/15744977?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjQxMTA4MjgzLWQ5ODUtNGE3MS04MGU4LTI4MzgwYzAwNDNlYiIsImRhdGEiOnt9LCJyYW5kb20iOiIzOTI4ZmM1YzRhODgwODI3ZDU0ZGVjYTYxNmViNTg0NyJ9.lt_pXKDYR6t29tGKqcm6huHzvgeqlwc5U5I9TXJ5-LQlL865aGLQE7B6-h6ZS7PLQ7yEGf6M3jV1HacXVpSPiA) to file examples and output)
 ``` python
-import fabio
 import numpy as np
 from azint import AzimuthalIntegrator
 
-img = fabio.open('Eiger4M_Al2O3_13.45keV.edf').data
-mask = fabio.open('mask.tif').data
-# 1D integration
-ai = AzimuthalIntegrator('test.poni', 
-                          4, 
-                          2000,
-                          unit='q',
-                          solid_angle=True,
-                          mask=mask) 
-I, error = ai.integrate(img)
+# ------------------------------
+# Load detector image and setup
+# ------------------------------
+
+# Path to the input HDF5 file containing detector data
+h5name = "scan-1737_pilatus.h5"
+h = h5py.File(h5name, 'r')
+
+# Extract a single image frame from the dataset
+img = h['/entry/instrument/pilatus/data'][10]
+
+# Path to the detector calibration file
+poni = 'Si_135mm.poni'
+
+# Path to the mask file for bad pixels or beamstop
+mask = 'hot_px_bs_mask.npy'
+
+
+# ------------------------------
+# Azimuthal integration settings
+# ------------------------------
+
+config = {
+    'poni': poni,                     # Detector geometry calibration file
+    'mask': mask,                     # Mask to ignore hot/dead pixels
+    'radial_bins': 3000,              # Number of radial bins
+    'azimuth_bins': 180,              # Number of azimuthal bins (set to None for 1D only)
+    'n_splitting': 21,                # Pixel subdivision for integration precision
+    'error_model': 'poisson',         # Error model for propagation
+    'solid_angle': True,              # Apply solid angle correction
+    'polarization_factor': 0.965,     # Correction for polarization effects
+    'normalized': True,               # Normalize intensity values
+    'unit': '2th',                    # Output units (e.g., '2th' for 2θ)
+}
+
+ai = AzimuthalIntegrator(**config)
+I, errors_1d, I_2d, errors_2d = ai.integrate(img)
 
 import matplotlib.pyplot as plt
 plt.figure()
 plt.plot(ai.radial_axis, I)
 
-# 2D integration
-ai = AzimuthalIntegrator('test.poni', 
-                          4, 
-                          512, 
-                          180, 
-                          unit='q',
-                          solid_angle=True,
-                          mask=mask) 
-I, error = ai.integrate(img)
 plt.figure()
-plt.imshow(I)
+plt.imshow(I_2d)
 
 ```
