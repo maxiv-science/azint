@@ -29,6 +29,7 @@ jobs:
             bash miniconda.sh -b -p /opt/conda && \
             rm miniconda.sh && \
             export PATH=/opt/conda/bin:$PATH && \
+            conda update -n base -c defaults conda -y && \
             conda tos accept --all && \
             conda install -y conda-build boa mamba git && \
             export SETUPTOOLS_SCM_PRETEND_VERSION=\$(python3 -m setuptools_scm) && \
