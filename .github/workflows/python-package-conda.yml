@@ -1,4 +1,4 @@
-name: Python Package using Conda (Compatible Build)
+name: Python Package using Conda (Miniforge + Rocky Linux)
 
 on: [push]
 
@@ -25,13 +25,13 @@ jobs:
             dnf install -y git wget bzip2 make gcc gcc-c++ python3 python3-pip && \
             python3 -m pip install --upgrade pip setuptools wheel && \
             python3 -m pip install setuptools_scm && \
-            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
+            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniconda.sh && \
             bash miniconda.sh -b -p /opt/conda && \
             rm miniconda.sh && \
             export PATH=/opt/conda/bin:$PATH && \
-            conda update -n base -c defaults conda -y && \
-            conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
-            conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+            conda config --remove channels defaults || true && \
+            conda config --add channels conda-forge && \
+            conda config --set channel_priority strict && \
             conda install -y conda-build boa mamba git && \
             export SETUPTOOLS_SCM_PRETEND_VERSION=\$(python3 -m setuptools_scm) && \
             echo \"Version: \$SETUPTOOLS_SCM_PRETEND_VERSION\" && \
