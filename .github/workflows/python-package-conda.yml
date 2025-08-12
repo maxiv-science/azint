@@ -13,20 +13,16 @@ jobs:
         fetch-depth: 0
 
     - name: Prepare output folder
-      run: mkdir -p ${{ github.workspace }}/conda-bld
-
-    - name: Build conda package inside CentOS 8 container
+      run: mkdir -p ${{ github.workspace }}/conda-bld- name: Build conda package inside Rocky Linux 8 container
       run: |
         docker run --rm \
           -v ${{ github.workspace }}:/workdir \
           -w /workdir \
-          centos:8 /bin/bash -c "
-            # Install EPEL and dependencies
-            yum install -y epel-release && \
-            yum install -y git wget bzip2 make gcc gcc-c++ python3 python3-pip && \
+          rockylinux:8 /bin/bash -c "
+            dnf install -y epel-release && \
+            dnf install -y git wget bzip2 make gcc gcc-c++ python3 python3-pip && \
             python3 -m pip install --upgrade pip setuptools wheel && \
             python3 -m pip install setuptools_scm && \
-            # Install conda (Miniconda) inside container
             wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
             bash miniconda.sh -b -p /opt/conda && \
             rm miniconda.sh && \
@@ -34,7 +30,6 @@ jobs:
             conda install -y conda-build boa mamba git && \
             export SETUPTOOLS_SCM_PRETEND_VERSION=\$(python3 -m setuptools_scm) && \
             echo \"Version: \$SETUPTOOLS_SCM_PRETEND_VERSION\" && \
-            # Build package with mamba-build
             conda mambabuild conda-recipe --output-folder=/workdir/conda-bld
           "
 
