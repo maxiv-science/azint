@@ -30,7 +30,8 @@ jobs:
             rm miniconda.sh && \
             export PATH=/opt/conda/bin:$PATH && \
             conda update -n base -c defaults conda -y && \
-            conda tos accept --all && \
+            conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+            conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
             conda install -y conda-build boa mamba git && \
             export SETUPTOOLS_SCM_PRETEND_VERSION=\$(python3 -m setuptools_scm) && \
             echo \"Version: \$SETUPTOOLS_SCM_PRETEND_VERSION\" && \
