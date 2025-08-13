@@ -58,6 +58,7 @@ jobs:
           miniforge-version: latest
           channels: conda-forge
           channel-priority: strict
+          conda-remove-defaults: true
       - name: Install conda-build and dependencies
         shell: pwsh
         run: conda install -y mamba conda-build setuptools_scm boa git
@@ -86,6 +87,7 @@ jobs:
           miniforge-version: latest
           channels: conda-forge
           channel-priority: strict
+          conda-remove-defaults: true
       - name: Install conda-build
         shell: bash -l {0}
         run: conda install -y mamba conda-build setuptools_scm boa git
@@ -115,6 +117,7 @@ jobs:
           architecture: arm64
           channels: conda-forge
           channel-priority: strict
+          conda-remove-defaults: true
       - name: Install conda-build
         shell: bash -l {0}
         run: conda install -y mamba conda-build setuptools_scm boa git
