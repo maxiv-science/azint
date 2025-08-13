@@ -1,85 +1,135 @@
-name: Python Package using Conda
+name: Python Package using Conda (Miniforge + Rocky Linux)
 
 on: [push]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30  # Increased timeout limit
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+  build-linux-oldglibc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniforge-version: latest
-    - name: Install conda-build
-      shell: bash -l {0}
-      run: conda install conda-build setuptools_scm boa git
-    - name: build package
-      shell: bash -l {0}
-      run: |
-        export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: "
-        echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
-    - uses: actions/upload-artifact@v4
-      with:
-        name: package-${{ github.job }}-${{ matrix.os }}
-        path: ${{ github.workspace }}/**/azint*.bz2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Prepare output folder
+        run: mkdir -p ${{ github.workspace }}/conda-bld
+
+      - name: Build conda package inside Rocky Linux 8 container
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workdir \
+            -w /workdir \
+            rockylinux:8 /bin/bash -c "
+              dnf install -y epel-release && \
+              dnf install -y git wget bzip2 make gcc gcc-c++ python3 python3-pip && \
+              wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniconda.sh && \
+              bash miniconda.sh -b -p /opt/conda && \
+              rm miniconda.sh && \
+              export PATH=/opt/conda/bin:\$PATH && \
+              conda config --remove channels defaults || true && \
+              conda config --add channels conda-forge && \
+              conda config --set channel_priority strict && \
+              conda install -y mamba conda-build boa setuptools_scm git && \
+              export SETUPTOOLS_SCM_PRETEND_VERSION=\$(python -m setuptools_scm) && \
+              echo \"Version: \$SETUPTOOLS_SCM_PRETEND_VERSION\" && \
+              conda mambabuild conda-recipe --output-folder=/workdir/conda-bld
+            "
+
+      - name: Upload built Linux packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-linux-oldglibc
+          path: |
+            ${{ github.workspace }}/conda-bld/**/azint*.bz2
+            ${{ github.workspace }}/conda-bld/**/azint*.conda
 
   build-win:
     runs-on: windows-latest
-    timeout-minutes: 30  # Increased timeout limit
+    timeout-minutes: 30
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: ilammy/msvc-dev-cmd@v1
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniforge-version: latest
-    - name: Install conda-build
-      shell: pwsh  # Use PowerShell shell
-      run: conda install conda-build setuptools_scm boa git
-    - name: build package
-      shell: pwsh
-      run: |
-        $env:SETUPTOOLS_SCM_PRETEND_VERSION = $(python -m setuptools_scm)
-        Write-Host "Version: $env:SETUPTOOLS_SCM_PRETEND_VERSION"
-        conda mambabuild "$env:GITHUB_WORKSPACE/conda-recipe" --output-folder="$env:GITHUB_WORKSPACE"
-    - uses: actions/upload-artifact@v4
-      with:
-        name: package-${{ github.job }}
-        path: ${{ github.workspace }}/**/azint*.bz2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          channels: conda-forge
+          channel-priority: strict
+          conda-remove-defaults: true
+      - name: Install conda-build and dependencies
+        shell: pwsh
+        run: conda install -y mamba conda-build setuptools_scm boa git
+      - name: Build package
+        shell: pwsh
+        run: |
+          $env:SETUPTOOLS_SCM_PRETEND_VERSION = python -m setuptools_scm
+          Write-Host "Version: $env:SETUPTOOLS_SCM_PRETEND_VERSION"
+          conda mambabuild "$env:GITHUB_WORKSPACE/conda-recipe" --output-folder="$env:GITHUB_WORKSPACE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-win
+          path: |
+            ${{ github.workspace }}/**/azint*.bz2
+            ${{ github.workspace }}/**/azint*.conda
+
+  build-macos-latest:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          channels: conda-forge
+          channel-priority: strict
+          conda-remove-defaults: true
+      - name: Install conda-build
+        shell: bash -l {0}
+        run: conda install -y mamba conda-build setuptools_scm boa git
+      - name: Build package
+        shell: bash -l {0}
+        run: |
+          export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
+          echo "Version: $SETUPTOOLS_SCM_PRETEND_VERSION"
+          conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-macos-latest
+          path: |
+            ${{ github.workspace }}/**/azint*.bz2
+            ${{ github.workspace }}/**/azint*.conda
 
   build-mac-arm:
     runs-on: macos-14
-    timeout-minutes: 30  # Increased timeout limit
-
+    timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniforge-version: latest
-    - name: Install conda-build
-      shell: bash -l {0}
-      run: conda install conda-build setuptools_scm boa git
-    - name: build package
-      shell: bash -l {0}
-      run: |
-        export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
-        echo "Version: "
-        echo $SETUPTOOLS_SCM_PRETEND_VERSION
-        conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
-    - uses: actions/upload-artifact@v4
-      with:
-        name: package-${{ github.job }}
-        path: ${{ github.workspace }}/**/azint*.bz2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          architecture: arm64
+          channels: conda-forge
+          channel-priority: strict
+          conda-remove-defaults: true
+      - name: Install conda-build
+        shell: bash -l {0}
+        run: conda install -y mamba conda-build setuptools_scm boa git
+      - name: Build package
+        shell: bash -l {0}
+        run: |
+          export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
+          echo "Version: $SETUPTOOLS_SCM_PRETEND_VERSION"
+          conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-mac-arm
+          path: |
+            ${{ github.workspace }}/**/azint*.bz2
+            ${{ github.workspace }}/**/azint*.conda
