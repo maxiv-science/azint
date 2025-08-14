@@ -63,6 +63,7 @@ jobs:
         shell: pwsh
         run: |
           conda config --remove channels defaults || echo "No defaults channel found"
+          conda config --add channels defaults
           conda config --add channels conda-forge
           conda config --set channel_priority strict
       - name: Install conda-build and dependencies
@@ -102,6 +103,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda config --remove channels defaults || true
+          conda config --add channels defaults
           conda config --add channels conda-forge
           conda config --set channel_priority strict
       - name: Install conda-build
