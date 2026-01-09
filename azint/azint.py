@@ -306,7 +306,8 @@ class AzimuthalIntegrator():
         errors_2d = None
         if self.error_model:
             # poisson error model
-            errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
+            sparse = np.clip(self.sparse_matrix.spmv_corrected2(img), a_min=0, a_max=None)
+            errors = np.sqrt(sparse).reshape(self.output_shape)
             if self.normalized:
                 errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
         
