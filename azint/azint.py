@@ -247,7 +247,9 @@ class AzimuthalIntegrator():
         
         
     def integrate(self, 
-                  img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+                  img: np.ndarray,
+                  mask=None) -> tuple[np.ndarray, np.ndarray] \
+                                   |  tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Performs azimuthal integration on the input image.
 
@@ -257,6 +259,7 @@ class AzimuthalIntegrator():
 
         Args:
             img (ndarray): Input image to be integrated. Must match expected input size.
+            mask (ndarray or str, optional): Mask array or path to mask file. Pixels marked with 1 will be excluded from the integration.
 
         Returns:
             tuple:
@@ -272,6 +275,22 @@ class AzimuthalIntegrator():
         
         if img.size != self.input_size:
             raise RuntimeError('Size of image is wrong!\nExpected %d\nActual size %d' %(self.input_size, img.size))
+            
+        if mask is not None:
+            if not isinstance(mask, np.ndarray):
+                if mask is not None:
+                    if mask == '':
+                        mask = None
+                    else:
+                        fname = mask
+                        self.mask_path = fname
+                        ending = os.path.splitext(fname)[1]
+                        if ending == '.npy':
+                            mask = np.load(fname)
+                        else:
+                            mask = fabio.open(fname).data
+            self.mask = mask
+
         if self.mask is None:
             norm = self.norm
         else:
@@ -287,7 +306,8 @@ class AzimuthalIntegrator():
         errors_2d = None
         if self.error_model:
             # poisson error model
-            errors = np.sqrt(self.sparse_matrix.spmv_corrected2(img)).reshape(self.output_shape)
+            sparse = np.clip(self.sparse_matrix.spmv_corrected2(img), a_min=0, a_max=None)
+            errors = np.sqrt(sparse).reshape(self.output_shape)
             if self.normalized:
                 errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
         
