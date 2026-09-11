@@ -34,11 +34,14 @@ class Poni:
                 key = words[0].strip().lower()
                 value = words[1].strip()
                 config[key] = value
-                
+
+
+        
         det_name = config['detector']
         det_config = json.loads(config['detector_config'])
         if "orientation" in config['detector_config']:
             det_config.pop("orientation", None)
+
         det = Detector.factory(det_name, det_config)
         return cls(det, 
                    float(config['distance']), 

@@ -26,7 +26,16 @@ class Detector():
     def factory(cls, name, config = {}):
         cls = globals().get(name)
         if inspect.isclass(cls) and issubclass(cls, Detector):
-            return cls(**config)
+            ms=cls.max_shape if \
+                not 'max_shape' in config else config['max_shape'] 
+            p1=cls.pixel1 if \
+                not 'pixel1' in config else config['pixel1'] 
+            p2=cls.pixel2 if \
+                not 'pixel2' in config else config['pixel2']
+            pc=None if \
+                not 'pixel_corners' in config else config['pixel_corners']
+            return Detector(p1,p2,ms,pc)
+
         else:
             raise RuntimeError(f'Detector {name} not supported')
     
