@@ -4,6 +4,8 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
+#include "Timer.h"
 #include "azint.hpp"
 
 void tocsr(std::vector<RListMatrix>& segments, int nrows,
@@ -289,45 +291,53 @@ py::array_t<float> spmv(const std::vector<int>& col_idx,
                         const std::vector<float>& values,
                         const py::array& x)
 {
-    int nrows = row_ptr.size() - 1;
-    py::array_t<float,  py::array::c_style> b(nrows);
-    
-    if (py::isinstance<py::array_t<uint8_t>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint8_t*)x.data());
-    }
-    else if (py::isinstance<py::array_t<uint16_t>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint16_t*)x.data());
-    }
-    else if (py::isinstance<py::array_t<uint32_t>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint32_t*)x.data());
-    }
-    else if (py::isinstance<py::array_t<int8_t>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int8_t*)x.data());
-    }
-    else if (py::isinstance<py::array_t<int16_t>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int16_t*)x.data());
-    }
-    else if (py::isinstance<py::array_t<int32_t>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int32_t*)x.data());
-    }
-    else if (py::isinstance<py::array_t<float>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (float*)x.data());
-    }
-    else if (py::isinstance<py::array_t<double>>(x)) {
-        py::gil_scoped_release release;
-        _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (double*)x.data());
-    }
-    else {
-        throw std::runtime_error("data dtype not supported");
-    }
-    return b;
+  static double sum(0.0);
+  auto aTime =cppm::timer::Clock::now();
+
+  int nrows = row_ptr.size() - 1;
+  py::array_t<float,  py::array::c_style> b(nrows);
+  
+  if (py::isinstance<py::array_t<uint8_t>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint8_t*)x.data());
+  }
+  else if (py::isinstance<py::array_t<uint16_t>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint16_t*)x.data());
+  }
+  else if (py::isinstance<py::array_t<uint32_t>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (uint32_t*)x.data());
+  }
+  else if (py::isinstance<py::array_t<int8_t>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int8_t*)x.data());
+  }
+  else if (py::isinstance<py::array_t<int16_t>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int16_t*)x.data());
+  }
+  else if (py::isinstance<py::array_t<int32_t>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (int32_t*)x.data());
+  }
+  else if (py::isinstance<py::array_t<float>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (float*)x.data());
+  }
+  else if (py::isinstance<py::array_t<double>>(x)) {
+    py::gil_scoped_release release;
+    _spmv(nrows, col_idx, row_ptr, values, b.mutable_data(), (double*)x.data());
+  }
+  else {
+    throw std::runtime_error("data dtype not supported");
+  }
+  auto bTime =cppm::timer::Clock::now();
+  sum+=cppm::timer::Seconds(bTime-aTime).count();
+  printf("Time == %g %g\n",sum*1000.0,
+	 1000.0*cppm::timer::Seconds(bTime-aTime).count());
+
+  return b;
 }
 
 py::array_t<float> Sparse::spmv(py::array x)
