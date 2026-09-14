@@ -309,17 +309,12 @@ class AzimuthalIntegrator():
             # poisson error model NO SQRT / NO NORM here
             signal,sparse = self.sparse_matrix.spmv_correctedPair(img)
             signal=signal.reshape(self.output_shape)
-            errors=errros.reshape(self.output_shape)
+            errors=errors.reshape(self.output_shape)
         else:
             signal = self.sparse_matrix.spmv_corrected(img).reshape(self.output_shape)
             
         norm = norm.reshape(self.output_shape)
-        
-        if self.error_model:
-            # poisson error model [needs sqrt .. but not before sums]
-            errors = self.sparse_matrix.spmv_corrected2(img).reshape
-            errors = errors.reshape(self.output_shape)
-        
+                
         if signal.ndim == 1: # must be radial bins only, no eta, ie 1d.
 
             errors=np.sqrt(errors)
