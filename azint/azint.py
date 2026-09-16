@@ -8,7 +8,6 @@ from .detector import Detector
 from _azint import Sparse
 import fabio
 
-
 __all__ = ['Poni', 'AzimuthalIntegrator']
 
 
@@ -34,11 +33,14 @@ class Poni:
                 key = words[0].strip().lower()
                 value = words[1].strip()
                 config[key] = value
-                
+
+
+        
         det_name = config['detector']
         det_config = json.loads(config['detector_config'])
         if "orientation" in config['detector_config']:
             det_config.pop("orientation", None)
+
         det = Detector.factory(det_name, det_config)
         return cls(det, 
                    float(config['distance']), 
@@ -260,7 +262,7 @@ class AzimuthalIntegrator():
         Args:
             img (ndarray): Input image to be integrated. Must match expected input size.
             mask (ndarray or str, optional): Mask array or path to mask file. Pixels marked with 1 will be excluded from the integration.
-
+silx:///home/ansell/ForMaxData/process/azint/scan-0036_eiger_eiger_integrated.h5?/entry/dataQXQY
         Returns:
             tuple:
                 - I (ndarray): 1D azimuthally integrated intensity.
@@ -297,42 +299,122 @@ class AzimuthalIntegrator():
             inverted_mask = 1 - self.mask
             img = img*inverted_mask
             norm = self.sparse_matrix.spmv(inverted_mask.reshape(-1))
-                
-        signal = self.sparse_matrix.spmv_corrected(img).reshape(self.output_shape)
-        norm = norm.reshape(self.output_shape)
-        
+
+
+        ## Eight options : split for easier parsing by eye
+        ## Norm : errors  :  1D/2D
+
+        flag=0
+        if self.error_model:
+            flag+=1
+        if self.normalized:
+            flag+=2
+        if self.azinumthal!=None:  ## 2d
+            flag+=4
+
         errors = None
         errors_1d = None
         errors_2d = None
-        if self.error_model:
-            # poisson error model
-            sparse = np.clip(self.sparse_matrix.spmv_corrected2(img), a_min=0, a_max=None)
-            errors = np.sqrt(sparse).reshape(self.output_shape)
-            if self.normalized:
-                errors = np.divide(errors, norm, out=np.zeros_like(errors), where=norm!=0.0)
-        
-        if signal.ndim == 1: # must be radial bins only, no eta, ie 1d.
-            if self.normalized:
-                signal = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-            self.norm_1d = norm
-            self.norm_2d = None
-            I = signal
-            if errors is not None:
-                errors_1d = errors
-            return I, errors_1d, None, None
-        else:  # will have eta bins
-            signal_1d =  np.sum(signal, axis=0)
-            self.norm_1d = np.sum(norm, axis=0)
-            if self.normalized:
-                signal_1d = np.divide(signal_1d, self.norm_1d, out=np.zeros_like(signal_1d), where=self.norm_1d!=0.0)
-                signal = np.divide(signal, norm, out=np.zeros_like(signal), where=norm!=0.0)
-            I = signal_1d
-            self.norm_2d = norm
-            I_2d = signal
-            if errors is not None:
-                errors_1d = np.sum(errors, axis=0)
-                errors_2d = errors
-                if self.normalized:
-                    errors_1d = np.divide(errors_1d, self.norm_1d, out=np.zeros_like(errors_1d), where=self.norm_1d!=0.0)
-                    errors_2d = np.divide(errors_2d, norm, out=np.zeros_like(errors_2d), where=norm!=0.0)
-            return I, errors_1d, I_2d, errors_2d
+
+        norm = norm.reshape(self.output_shape)
+        self.norm_1d = norm
+        self.norm_2d = None
+
+        ## Switch on all the different combinations of error/norm/1d:2d
+        match(flag):
+
+            case 0:   # NoErr / no norm / 1D
+                signal = self.sparse_matrix.spmv_corrected(img)
+                signal = signal.reshape(self.output_shape)
+                return signal,errors_1d,None,None
+            case 1:   ## ERROR / no norm / 1D
+                signal,errors = self.sparse_matrix.spmv_correctedPair(img)
+                signal = signal.reshape(self.output_shape)
+                errors = errors.reshape(self.output_shape)
+                errors = np.sqrt(errors)
+                return signal,errors,None,None
+            case 2:   ## No error / NORM / 1D
+                signal = self.sparse_matrix.spmv_corrected(img)
+                signal = signal.reshape(self.output_shape)
+                signal = np.divide(signal, self.norm,
+                                   out=np.zeros_like(signal),
+                                   where=self.norm!=0.0)
+                return signal,errors,None,None
+            case 3:   ## ERROR / NORM / 1D
+                signal,errors = self.sparse_matrix.spmv_correctedPair(img)
+                signal = signal.reshape(self.output_shape)
+                errors = errors.reshape(self.output_shape)
+                errors = np.sqrt(np.clip(errors,a_min=0.0,a_max=None))
+                signal = np.divide(signal, self.norm,
+                                   out=np.zeros_like(signal),
+                                   where=self.norm!=0.0)
+                errors = np.divide(errorrs, self.norm,
+                                   out=np.zeros_like(errors),
+                                   where=self.norm!=0.0)
+                return signal,errors,None,None
+
+
+            case 4:   # no err / no norm / 2D
+                signal = self.sparse_matrix.spmv_corrected(img)
+                signal = signal.reshape(self.output_shape)
+                signal_1d =  np.sum(signal, axis=0)
+                self.norm_2d=norm
+                self.norm_1d=np.sum(norm,axis=0)
+                
+                return signal_1d,None,signal,None
+
+            case 5:   # ERROR / NoNorm / 2D
+                signal,errors = self.sparse_matrix.spmv_correctedPair(img)
+                signal = signal.reshape(self.output_shape)
+                errors = errors.reshape(self.output_shape)
+                errors = np.sqrt(np.clip(errors,a_min=0.0,a_max=None))      
+                errors_1d = np.sum(errors)
+                errors = np.sqrt(errors)
+                errors_1d = np.sqrt(errors_1d)      
+
+                self.norm_2d=norm
+                self.norm_1d=np.sum(norm,axis=0)
+                
+                return signal_1d,errors_1d,signal,errors
+
+            case 6:   # no error / NORM / 2D
+                signal = self.sparse_matrix.spmv_corrected(img)
+                signal = signal.reshape(self.output_shape)
+                signal_1d =  np.sum(signal, axis=0)
+
+                self.norm_2d=norm
+                self.norm_1d=np.sum(norm,axis=0)
+                signal = np.divide(
+                    signal,norm,out=np.zeros_like(signal), where=norm!=0.0)
+                signal_1d = np.divide(
+                    signal,self.norm_1d,out=np.zeros_like(signal_1d),
+                    where=self.norm_1d!=0.0)
+                
+                return signal_1d,None,signal,None
+
+            case 7:   # ERROR / NORM / 2D
+                signal,errors = self.sparse_matrix.spmv_correctedPair(img)
+                signal = signal.reshape(self.output_shape)
+                signal_1d =  np.sum(signal, axis=0)
+                errors = errors.reshape(self.output_shape)
+                errors = np.sqrt(np.clip(errors,a_min=0.0,a_max=None))      
+                errors_1d = np.sum(errors)
+                errors = np.sqrt(errors)
+                errors_1d = np.sqrt(errors_1d)      
+
+                self.norm_2d=norm
+                self.norm_1d=np.sum(norm,axis=0)
+                signal = np.divide(
+                    signal,norm,out=np.zeros_like(signal), where=norm!=0.0)
+                errors = np.divide(
+                    errors,norm,out=np.zeros_like(errors), where=norm!=0.0)
+                signal_1d = np.divide(
+                    signal,self.norm_1d,out=np.zeros_like(signal_1d),
+                    where=self.norm_1d!=0.0)
+                errors_1d = np.divide(
+                    errors_1d,self.norm_1d,out=np.zeros_like(errors_1d),
+                    where=self.norm_1d!=0.0)
+                
+                return signal_1d,errors_1d,signal,errors
+
+            
