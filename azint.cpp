@@ -69,26 +69,27 @@ void matrix_multiplication(double A[3][3], double B[3][3], double C[3][3])
     }
 }
 
-void rotation_matrix(double rot[3][3], Poni poni)
+void rotation_matrix(double rot[3][3],const Poni& poni)
 {
     //Rotation about axis 1: Note this rotation is left-handed
-    double rot1[3][3] = {{1.0, 0.0, 0.0},
-                        {0.0, cosf(poni.rot1), sinf(poni.rot1)},
-                        {0.0, -sinf(poni.rot1), cosf(poni.rot1)}};
+  const double rot1[3][3] = {{1.0, 0.0, 0.0},
+			 {0.0, std::cos(poni.rot1), std::sin(poni.rot1)},
+			 {0.0, -std::sin(poni.rot1), std::cos(poni.rot1)}};
                         
     // Rotation about axis 2. Note this rotation is left-handed
-    double rot2[3][3] = {{cosf(poni.rot2), 0.0, -sinf(poni.rot2)},
+  const double rot2[3][3] = {{std::cos(poni.rot2), 0.0, -std::sin(poni.rot2)},
                         {0.0, 1.0, 0.0},
-                        {sinf(poni.rot2), 0.0, cosf(poni.rot2)}};
+                        {std::sin(poni.rot2), 0.0, std::cos(poni.rot2)}};
                         
     // Rotation about axis 3: Note this rotation is right-handed
-    double rot3[3][3] = {{cosf(poni.rot3), -sinf(poni.rot3), 0.0},
-                        {sinf(poni.rot3), cosf(poni.rot3), 0.0},
+  const double rot3[3][3] = {{std::cos(poni.rot3), -std::sin(poni.rot3), 0.0},
+                        {std::sin(poni.rot3), std::cos(poni.rot3), 0.0},
                         {0.0, 0.0, 1.0}};
-    double tmp[3][3];
-    // np.dot(np.dot(rot3, rot2), rot1)
-    matrix_multiplication(tmp, rot3, rot2);
-    matrix_multiplication(rot, tmp, rot1);
+  double tmp[3][3];
+  // np.dot(np.dot(rot3, rot2), rot1)
+  matrix_multiplication(tmp, rot3, rot2);
+  matrix_multiplication(rot, tmp, rot1);
+  return;
 }
 
 void generate_matrix(const Poni& poni,
@@ -101,7 +102,7 @@ void generate_matrix(const Poni& poni,
                      const size_t nphi_bins, const double* phi_bins)
 {
     double rot[3][3];
-    rotation_matrix(rot, poni);
+    rotation_matrix(rot,poni);
     
     // h, w, corner index [A, B, C, D], coordinates [z, y, x]
     // A D
@@ -148,8 +149,8 @@ void generate_matrix(const Poni& poni,
                     double pos[3];
                     dot(pos, rot, p);
                     
-                    const double r = sqrtf(pos[0]*pos[0] + pos[1]*pos[1]);
-                    const double tth = atan2f(r, pos[2]);
+                    const double r = std::sqrt(pos[0]*pos[0] + pos[1]*pos[1]);
+                    const double tth = std::atan2(r, pos[2]);
                     
                     double radial_coord = 0.0;
                     switch(output_unit)
