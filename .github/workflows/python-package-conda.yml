@@ -38,6 +38,8 @@ jobs:
                 --output-dir=/workdir/conda-bld
             "
 
+      - name: Fix package permissions
+        run: chmod -R a+rX ${{ github.workspace }}/conda-bld
       - name: Upload built Linux packages
         uses: actions/upload-artifact@v4
         with:
