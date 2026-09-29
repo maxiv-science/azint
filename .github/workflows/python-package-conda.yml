@@ -36,10 +36,9 @@ jobs:
               rattler-build build \
                 --recipe conda-recipe/recipe.yaml \
                 --output-dir=/workdir/conda-bld
+                chown -R \$(stat -c '%u:%g' /workdir) /workdir/conda-bld
             "
 
-      - name: Fix package permissions
-        run: chmod -R a+rX ${{ github.workspace }}/conda-bld
       - name: Upload built Linux packages
         uses: actions/upload-artifact@v4
         with:
