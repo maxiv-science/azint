@@ -30,10 +30,13 @@ jobs:
               conda config --remove channels defaults || true && \
               conda config --add channels conda-forge && \
               conda config --set channel_priority strict && \
-              conda install -y mamba conda-build boa setuptools_scm git && \
+              conda install -y rattler-build setuptools_scm git && \
               export SETUPTOOLS_SCM_PRETEND_VERSION=\$(python -m setuptools_scm) && \
               echo \"Version: \$SETUPTOOLS_SCM_PRETEND_VERSION\" && \
-              conda mambabuild conda-recipe --output-folder=/workdir/conda-bld
+              rattler-build build \
+                --recipe conda-recipe/recipe.yaml \
+                --output-dir=/workdir/conda-bld
+                chown -R \$(stat -c '%u:%g' /workdir) /workdir/conda-bld
             "
 
       - name: Upload built Linux packages
@@ -52,7 +55,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: ilammy/msvc-dev-cmd@v1
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
@@ -66,21 +68,23 @@ jobs:
           conda config --add channels defaults
           conda config --add channels conda-forge
           conda config --set channel_priority strict
-      - name: Install conda-build and dependencies
+      - name: Install rattler-build and dependencies
         shell: pwsh
-        run: conda install -y mamba conda-build setuptools_scm boa git
+        run: conda install -y rattler-build setuptools_scm git
       - name: Build package
         shell: pwsh
         run: |
           $env:SETUPTOOLS_SCM_PRETEND_VERSION = $(python -m setuptools_scm)
           Write-Host "Version: $env:SETUPTOOLS_SCM_PRETEND_VERSION"
-          conda mambabuild "$env:GITHUB_WORKSPACE/conda-recipe" --output-folder="$env:GITHUB_WORKSPACE"
+          rattler-build build `
+            --recipe "$env:GITHUB_WORKSPACE/conda-recipe/recipe.yaml" `
+            --output-dir "$env:GITHUB_WORKSPACE/conda-bld"
       - uses: actions/upload-artifact@v4
         with:
           name: package-win
           path: |
-            ${{ github.workspace }}/**/*.bz2
-            ${{ github.workspace }}/**/*.conda
+            ${{ github.workspace }}/conda-bld/**/*.bz2
+            ${{ github.workspace }}/conda-bld/**/*.conda
 
   build-macos:
     runs-on: macos-14
@@ -106,18 +110,20 @@ jobs:
           conda config --add channels defaults
           conda config --add channels conda-forge
           conda config --set channel_priority strict
-      - name: Install conda-build
+      - name: Install rattler-build
         shell: bash -l {0}
-        run: conda install -y mamba conda-build setuptools_scm boa git
+        run: conda install -y rattler-build setuptools_scm git
       - name: Build package
         shell: bash -l {0}
         run: |
           export SETUPTOOLS_SCM_PRETEND_VERSION=$(python -m setuptools_scm)
           echo "Version: $SETUPTOOLS_SCM_PRETEND_VERSION"
-          conda mambabuild $GITHUB_WORKSPACE/conda-recipe --output-folder=$GITHUB_WORKSPACE
+          rattler-build build \
+            --recipe "$GITHUB_WORKSPACE/conda-recipe/recipe.yaml" \
+            --output-dir "$GITHUB_WORKSPACE/conda-bld"
       - uses: actions/upload-artifact@v4
         with:
           name: package-macos-${{ matrix.arch }}
           path: |
-            ${{ github.workspace }}/**/*.bz2
-            ${{ github.workspace }}/**/*.conda
+            ${{ github.workspace }}/conda-bld/**/*.bz2
+            ${{ github.workspace }}/conda-bld/**/*.conda
