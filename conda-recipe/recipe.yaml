@@ -1,0 +1,43 @@
+package:
+  name: azint
+  version: ${{ env.get("SETUPTOOLS_SCM_PRETEND_VERSION", default="0.0.0") }}
+
+source:
+  path: ..
+
+build:
+  script:
+    content: python -m pip install . -vv
+    env:
+      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ env.get("SETUPTOOLS_SCM_PRETEND_VERSION", default="0.0.0") }}
+
+requirements:
+  build:
+    - ${{ compiler('cxx') }}
+  host:
+    - python
+    - pip
+    - numpy
+    - fabio
+    - pybind11
+    - setuptools_scm
+  run:
+    - python
+    - numpy
+    - fabio
+
+tests:
+  - script:
+      - pytest tests/
+    requirements:
+      run:
+        - pytest
+    files:
+      source:
+        - tests/*.py
+        - tests/test.poni
+
+about:
+  license: MIT
+  license_file:
+    - LICENSE

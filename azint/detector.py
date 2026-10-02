@@ -26,7 +26,17 @@ class Detector():
     def factory(cls, name, config = {}):
         cls = globals().get(name)
         if inspect.isclass(cls) and issubclass(cls, Detector):
-            return cls(**config)
+            ms=cls.shape if \
+                not 'max_shape' in config else config['max_shape'] 
+            p1=cls.pixel1 if \
+                not 'pixel1' in config else config['pixel1'] 
+            p2=cls.pixel2 if \
+                not 'pixel2' in config else config['pixel2']
+            pc=None if \
+                not 'pixel_corners' in config else config['pixel_corners']
+            return cls(p1,p2,ms,pc)
+##            return cls(**config)
+
         else:
             raise RuntimeError(f'Detector {name} not supported')
     
@@ -76,130 +86,129 @@ class NexusDetector(Detector):
 
 # Eiger detectors
 class Eiger(Detector):
-    max_shape = (10, 10)
-    def __init__(self):
-        super().__init__(75e-6, 75e-6, self.max_shape)
- 
+    shape = (10, 10)
+    pixel1 = 75e-6
+    pixel2 = 75e-6 
  
 # Eiger1 detectors
 class Eiger500k(Eiger):
-    max_shape = (514, 1030)
+    shape = (514, 1030)
     
 
 class Eiger1M(Eiger):
-    max_shape = (1065, 1030)
+    shape = (1065, 1030)
 
 
 class Eiger4M(Eiger):
-    max_shape = (2167, 2070)
+    shape = (2167, 2070)
     
 
 class Eiger9M(Eiger):
-    max_shape = (3269, 3110)
+    shape = (3269, 3110)
 
 
 class Eiger16M(Eiger):
-    max_shape = (4371, 4150)
+    shape = (4371, 4150)
     
 
 # Eiger2 detectors
 class Eiger2_250k(Eiger):
-    max_shape = (512, 512)
+    shape = (512, 512)
     
 
 class Eiger2_500k(Eiger):
-    max_shape = (512, 1028)
+    shape = (512, 1028)
     
 
 class Eiger2_1M(Eiger):
-    max_shape = (1062, 1028)
+    shape = (1062, 1028)
     
     
 class Eiger2_4M(Eiger):
-    max_shape = (2162, 2068)
+    shape = (2162, 2068)
     
     
 class Eiger2_9M(Eiger):
-    max_shape = (3262, 3108)
+    shape = (3262, 3108)
     
     
 class Eiger2_16M(Eiger):
-    max_shape = (4362, 4148)
+    shape = (4362, 4148)
   
   
 # Eiger2 CdTe detectors
 class Eiger2CdTe_500k(Eiger):
-    max_shape = (512, 1028)
+    shape = (512, 1028)
     
 
 class Eiger2CdTe_1M(Eiger):
-    max_shape = (1062, 1028)
+    shape = (1062, 1028)
     
 
 class Eiger2CdTe_4M(Eiger):
-    max_shape = (2162, 2068)
+    shape = (2162, 2068)
     
     
 class Eiger2CdTe_9M(Eiger):
-    max_shape = (3262, 3108)
+    shape = (3262, 3108)
     
     
 class Eiger2CdTe_16M(Eiger):
-    max_shape = (4362, 4148)
+    shape = (4362, 4148)
     
 
 # Pilatus detectors
 class Pilatus(Detector):
-    max_shape = (10, 10)
-    def __init__(self):
-        super().__init__(172e-6, 172e-6, self.max_shape)
+    shape = (10, 10)
+    pixel1=172e-6
+    pixel2=172e-6
         
         
 class Pilatus1M(Pilatus):
-    max_shape = (1043, 981)
+    shape = (1043, 981)
     
 
 class Pilatus2M(Pilatus):
-    max_shape = (1679, 1475)
+    shape = (1679, 1475)
     
     
 class Pilatus6M(Pilatus):
-    max_shape = (2527, 2463)
+    shape = (2527, 2463)
     
 
 class PilatusCdTe1M(Pilatus):
-     max_shape = (1043, 981)
+     shape = (1043, 981)
 
 
 class PilatusCdTe2M(Pilatus):
-    max_shape = (1679, 1475)
+    shape = (1679, 1475)
     
 
 class Pilatus4(Detector):
-    max_shape = (10, 10)
-    def __init__(self):
-        super().__init__(150e-6, 150e-6, self.max_shape)
+    shape = (10, 10)
+    pixel1=150e-6
+    pixel2=150e-6
         
         
 class Pilatus4_1M(Pilatus4):
-    max_shape = (1080, 1033)
+    shape = (1080, 1033)
     
     
 class Pilatus4_2M(Pilatus4):
-    max_shape = (1630, 1553)
+    shape = (1630, 1553)
     
     
 class Pilatus4_4M(Pilatus4):
-    max_shape = (2180, 2073)
+    shape = (2180, 2073)
     
     
 class Pilatus4_CdTe_1M(Pilatus4):
-    max_shape = (1080, 1033)
+    shape = (1080, 1033)
     
 
 class Pilatus4_CdTe_2M(Pilatus4):
-    max_shape = (1630, 1553)
+    shape = (1630, 1553)
     
     
 class Pilatus4_CdTe_4M(Pilatus4):
-    max_shape = (2180, 2073)
+    shape = (2180, 2073)
