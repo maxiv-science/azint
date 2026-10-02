@@ -186,6 +186,8 @@ class PilatusCdTe2M(Pilatus):
 
 class Pilatus4(Detector):
     shape = (10, 10)
+    pixel1=150e-6
+    pixel2=150e-6
         
         
 class Pilatus4_1M(Pilatus4):
