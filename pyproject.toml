@@ -19,6 +19,7 @@ dynamic = ['version']
 
 [project.optional-dependencies]
 test = ['pytest']
+benchmarks = ['pytest', 'pytest-benchmark']
 
 [project.urls]
 Homepage = 'https://github.com/maxiv-science/azint'
@@ -63,8 +64,12 @@ azint = { path = '.', editable = true }
 [tool.pixi.feature.test.dependencies]
 pytest = '*'
 
+[tool.pixi.feature.benchmarks.dependencies]
+pytest = '*'
+pytest-benchmark = '*'
+
 [tool.pixi.environments]
-default = { features = ['test'] }
+default = { features = ['test', 'benchmarks'] }
 
 [tool.pixi.tasks.install]
 cmd = 'python -m pip install -e . --no-build-isolation -v'
@@ -76,5 +81,11 @@ env = { PYTHONNOUSERSITE = '1' }
 # install is inlined: nested depends-on does not inherit the target environment
 cmd = 'python -m pip install -e . --no-build-isolation -q && pytest tests'
 description = 'Rebuild extension and run the test suite'
+clean-env = true
+env = { PYTHONNOUSERSITE = '1' }
+
+[tool.pixi.tasks.benchmark]
+cmd = 'python -m pip install -e . --no-build-isolation -q && pytest benchmarks/ --benchmark-json=output.json'
+description = 'Rebuild extension and run pytest-benchmark'
 clean-env = true
 env = { PYTHONNOUSERSITE = '1' }

@@ -21,5 +21,6 @@ output/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+output.json
 uv.lock
 pixi.lock

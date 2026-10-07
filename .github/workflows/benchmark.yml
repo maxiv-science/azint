@@ -1,0 +1,59 @@
+# Draft: pytest-benchmark -> github-action-benchmark -> gh-pages charts.
+# Enable Pages from the gh-pages branch after the first successful master push.
+name: Benchmark
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          channels: conda-forge
+          channel-priority: strict
+          conda-remove-defaults: true
+          python-version: "3.12"
+
+      - name: Install build and bench deps
+        run: |
+          conda install -y \
+            numpy fabio pybind11 setuptools setuptools_scm pip \
+            cxx-compiler pytest pytest-benchmark
+          pip install .
+
+      - name: Run pytest-benchmark
+        run: pytest benchmarks/ --benchmark-json=output.json
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: azint
+          tool: pytest
+          output-file-path: output.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          # Shared runners are noisy; comment only, do not fail the job.
+          alert-threshold: "200%"
+          comment-on-alert: true
+          summary-always: true
+          fail-on-alert: false
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
