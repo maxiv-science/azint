@@ -1,6 +1,80 @@
 [build-system]
-requires = ['setuptools>=60', 'wheel', 'pybind11>=2.11.0', 'setuptools_scm>=8.0']
+requires = ['setuptools>=61', 'wheel', 'pybind11>=2.11.0', 'setuptools_scm>=8.0']
 build-backend = 'setuptools.build_meta'
 
+[project]
+name = 'azint'
+description = 'Azimuthal Integration'
+readme = 'README.md'
+license = 'MIT'
+authors = [
+    {name = 'Clemens Weninger'},
+]
+requires-python = '>=3.10'
+dependencies = [
+    'numpy>=2',
+    'fabio',
+]
+dynamic = ['version']
+
+[project.optional-dependencies]
+test = ['pytest']
+
+[project.urls]
+Homepage = 'https://github.com/maxiv-science/azint'
+Documentation = 'https://maxiv-science.github.io/azint'
+
+[tool.setuptools.packages.find]
+include = ['azint*']
+
+[tool.setuptools.package-data]
+azint = ['benchmark/bench.poni']
+
 [tool.setuptools_scm]
-write_to = 'azint/_version.py'
+version_file = 'azint/_version.py'
+
+[tool.pytest.ini_options]
+testpaths = ['tests']
+
+# Minimal pixi from feature/modernise-packaging (default env only).
+[tool.pixi.workspace]
+channels = ['conda-forge']
+platforms = ['linux-64']
+
+[tool.pixi.dependencies]
+python = '3.12.*'
+numpy = '>=2'
+fabio = '*'
+pybind11 = '>=2.11'
+pip = '*'
+setuptools = '>=61'
+setuptools-scm = '>=8'
+wheel = '*'
+cxx-compiler = '*'
+libgomp = '*'
+git = '*'
+
+[tool.pixi.pypi-options]
+no-build-isolation = ['azint']
+
+[tool.pixi.pypi-dependencies]
+azint = { path = '.', editable = true }
+
+[tool.pixi.feature.test.dependencies]
+pytest = '*'
+
+[tool.pixi.environments]
+default = { features = ['test'] }
+
+[tool.pixi.tasks.install]
+cmd = 'python -m pip install -e . --no-build-isolation -v'
+description = 'Rebuild the editable install (C++ extension)'
+clean-env = true
+env = { PYTHONNOUSERSITE = '1' }
+
+[tool.pixi.tasks.test]
+# install is inlined: nested depends-on does not inherit the target environment
+cmd = 'python -m pip install -e . --no-build-isolation -q && pytest tests'
+description = 'Rebuild extension and run the test suite'
+clean-env = true
+env = { PYTHONNOUSERSITE = '1' }
