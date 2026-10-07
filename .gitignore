@@ -1,0 +1,26 @@
+# Python / packaging
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+azint/_version.py
+_azint*.so
+_azint*.pyd
+
+# Pixi
+.pixi/
+
+# Conda / rattler-build
+output/
+
+# Test / tooling
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+output.json
+uv.lock
+pixi.lock
